@@ -4,7 +4,8 @@ from scipy.ndimage import binary_fill_holes
 import numpy as np
 import json
 import glob, os, sys, math
-
+from pathlib import Path
+testclement=True
 
 #_______________________________________________
 class NpEncoder(json.JSONEncoder):
@@ -19,9 +20,9 @@ class NpEncoder(json.JSONEncoder):
 
 
 #_______________________________________________
-def simpleSeg(img,  outdir, count, thr=3.5, delta=1, npix=100):
-    print('========== segmentation')
-    if count>17:return
+def simpleSeg(img,  outdir, count, thr=2., delta=2, npix=400):
+    print('========== simple segmentation')
+    if count>17 and testclement:return
     image=img[0]
     img_seeds=np.zeros(image.shape, dtype=bool)
     for i in range(len(image)):
@@ -47,7 +48,7 @@ def simpleSeg(img,  outdir, count, thr=3.5, delta=1, npix=100):
     
     previous_labels=[]
     if count>0:
-        previous_labels = glob.glob(outdir+'/mask_tf{}_thr{}delta{}_cell*.json'.format(count-1,thr,delta))
+        previous_labels = glob.glob(os.path.join(outdir, 'mask_tf{}_thr{}delta{}_cell*.json'.format(count-1,thr,delta)))
     extracount=0
     for c in range(len(cells)):
         minDist=1000000000
@@ -84,13 +85,13 @@ def simpleSeg(img,  outdir, count, thr=3.5, delta=1, npix=100):
         json_object = json.dumps(dic, cls=NpEncoder)
 
         # Writing to <out>.json
-        outname=outdir+'/mask_tf{}_thr{}delta{}_{}.json'.format(count,thr,delta,celllabel)
+        outname=os.path.join(outdir, 'mask_tf{}_thr{}delta{}_{}.json'.format(count,thr,delta,celllabel))
         with open(outname, "w") as outfile:
             outfile.write(json_object)
 
 
     celldic={}
-    celllist=glob.glob(outdir+'/mask_tf{}_thr{}delta{}_cell*.json'.format(count,2.,2))
+    celllist=glob.glob(os.path.join(outdir , 'mask_tf{}_thr{}delta{}_cell*.json'.format(count,2.,2)))
     celllist.sort()
     for cellid, cell in enumerate(celllist):
  
@@ -108,7 +109,7 @@ def simpleSeg(img,  outdir, count, thr=3.5, delta=1, npix=100):
         'cells':celldic
             }
     jsontf_object = json.dumps(timeframedic, indent=4)
-    outnametf=outdir+'/metadata_tf{}.json'.format(count)
+    outnametf=os.path.join(outdir, 'metadata_tf{}.json'.format(count))
     if not os.path.isfile(outnametf):
         with open(outnametf, "w") as outfiletf:
             outfiletf.write(jsontf_object)
