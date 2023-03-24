@@ -344,9 +344,11 @@ control_col = sg.Column([
 	[sg.Text("Alive: ", size=(10, 1), key='-ALIVETEXT-', font=AppFont), sg.Text("NA", size=(10, 1), key='-ALIVETEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-ALIVELIST-', size=(10, 1), font=AppFont)],
 	[sg.Text("Status: ", size=(10, 1), key='-STATUSTEXT-', font=AppFont), sg.Text("NA", size=(10, 1), key='-STATUSTEXT2-', font=AppFont), sg.Combo(["single", "doublenuclei", "multiplecells", "pair"],enable_events=True,key='-STATUSLIST-', size=(10, 1), font=AppFont)],
 	[sg.Text("Dividing: ", size=(10, 1), key='-DIVIDINGTEXT-', font=AppFont), sg.Text("False", size=(10, 1), key='-DIVIDINGTEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-DIVIDINGLIST-', size=(10, 1), font=AppFont)],
-	[sg.Text("Skipframe: ", size=(10, 1), key='-SKIPFRAMETEXT-', font=AppFont), sg.Text("False", size=(10, 1), key='-SKIPFRAMETEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-SKIPFAMELIST-', size=(10, 1), font=AppFont)],
+
 
 	[sg.Submit('Timeframe Metadata',key='-TIMEFRAMEMETADATASUBMIT-', font=AppFont)],	 
+	[sg.Text("Skipframe: ", size=(10, 1), key='-SKIPFRAMETEXT-', font=AppFont), sg.Text("False", size=(10, 1), key='-SKIPFRAMETEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-SKIPFRAMELIST-', size=(10, 1), font=AppFont)],
+
 	[sg.Submit('Position Metadata',key='-POSITIONMETADATASUBMIT-', font=AppFont)],	 
 
 	[sg.Submit('Project Metadata',key='-PROJECTMETADATASUBMIT-', font=AppFont)],	 
@@ -393,6 +395,12 @@ while True:
 
 	if event == sg.WIN_CLOSED: break
 	
+	window['-MASKTEXT2-'].update('')
+	window['-CHECKTEXT2-'].update('')
+	window['-ALIVETEXT2-'].update('')
+	window['-STATUSTEXT2-'].update('')
+	window['-DIVIDINGTEXT2-'].update('')
+
 	if not values['-XGRADIENT-'].isnumeric() or not values['-YGRADIENT-'].isnumeric() or not values['-DXGRADIENT-'].isnumeric() or not values['-DYGRADIENT-'].isnumeric() :
 		sg.popup_no_buttons('Value should be numeric', title="WARNING", font=TabFont)
 		continue
@@ -686,7 +694,23 @@ while True:
 			fig4_agg = draw_figure(window['-CANVAS4-'].TKCanvas, fig4)
 
 
+	if event == '-TIMEFRAMEMETADATASUBMIT-':
+		window['-SKIPFRAMELIST-'].update('')
+		if os.path.isfile(theimagemeta+'/metadata_tf{}.json'.format(count)):
+			tf_file = open(theimagemeta+'/metadata_tf{}.json'.format(count))
+			tf_data = json.load(tf_file)
+			if values['-SKIPFRAMELIST-']!='': tf_data["skipframe"]=values['-SKIPFRAMELIST-']
+			jsontf_object = json.dumps(tf_data, indent=4)
+			outnametf=theimagemeta+'/metadata_tf{}.json'.format(count)
+			with open(outnametf, "w") as outfiletf:
+				outfiletf.write(jsontf_object)
+			window['-SKIPFRAMETEXT2-'].update(tf_data["skipframe"])
 
+
+	if os.path.isfile(theimagemeta+'/metadata_tf{}.json'.format(count)):
+		tf_file = open(theimagemeta+'/metadata_tf{}.json'.format(count))
+		tf_data = json.load(tf_file)
+		window['-SKIPFRAMETEXT2-'].update(tf_data["skipframe"])
 
 
 	#[sg.Submit('TimeFrame Metadata',key='-TIMEFRAMEMETADATASUBMIT-', font=AppFont)],	  
