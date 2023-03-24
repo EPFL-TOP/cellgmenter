@@ -3,9 +3,12 @@ import reader as myread
 import os
 import glob
 import json
+testclement=True
 
+#use windows or linux path here
 path ="/Users/helsens/data/singleCell"
-path_meta=os.path.join(path,'metadata')
+
+path_meta=os.path.join(path, "metadata")
 if not os.path.exists(path_meta):
 	os.makedirs(path_meta)
 	
@@ -16,9 +19,9 @@ print('project list ',project_list)
 
 
 for proj in project_list:
-    if 'wsc_epfl-wscl_060' not in proj:continue
+    if testclement and 'wsc_epfl-wscl_060' not in proj:continue
     position_list=[]
-    for p in glob.glob(os.path.join(path,proj)+'/*'):
+    for p in glob.glob(os.path.join(path, proj, '*')):
         if 'metadata'not in p: position_list.append(p)
     position_list.sort()
     print(position_list)
@@ -49,9 +52,10 @@ for proj in project_list:
 
     #Check if all the positions have metadata
     for pos in position_list:
-        if 'wsc_epfl-wscl_060_xy05' not in pos:continue
+        if testclement and 'wsc_epfl-wscl_060_xy05' not in pos:continue
 
-        position_dir=os.path.join(path_meta, proj, pos.split('/')[-1].replace('.nd2','').replace('.tif',''))
+        position_dir=os.path.join(path_meta, proj, os.path.split(pos)[-1].replace('.nd2','').replace('.tif',''))
+        #position_dir=os.path.join(path_meta, proj, pos.split('/')[-1].replace('.nd2','').replace('.tif',''))
         if not os.path.exists(position_dir):
             os.makedirs(position_dir)
         position_meta = os.path.join(position_dir, 'position.json')
@@ -79,11 +83,11 @@ for proj in project_list:
 
         #loop over images of each position
         image=None
-        if 'nd2' == position_data['name'].split('.')[-1]: image = myread.nd2reader(position_data['name'])
-        elif 'tif' == position_data['name'].split('.')[-1]: image = myread.tifreader(position_data['name'])
+        if   '.nd2' in os.path.split(position_data['name'])[-1]: image = myread.nd2reader(position_data['name'])
+        elif '.tif' in os.path.split(position_data['name'])[-1]: image = myread.tifreader(position_data['name'])
         else: print('unsupported image format')
         for img in range(len(image)):
-            timeframe_meta=glob.glob(position_dir+'/mask_tf{}_thr{}delta{}_cell*.json'.format(img,2.,2))
+            timeframe_meta=glob.glob(os.path.join(position_dir+'mask_tf{}_thr{}delta{}_cell*.json'.format(img,2.,2)))
             if len(timeframe_meta)==0:
                 seg.simpleSeg(image[img], position_dir, img, thr=2., delta=2, npix=400)
 

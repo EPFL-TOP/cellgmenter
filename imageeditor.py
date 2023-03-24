@@ -33,6 +33,10 @@ fig4 = matplotlib.figure.Figure(figsize=(10,5))
 fig4.add_subplot(121).plot([],[])
 fig4.add_subplot(122).plot([],[])
 
+#use windows or linux path here
+path ="/Users/helsens/data/singleCell"
+metadatapath=os.path.join(path, "metadata")
+
 
 theimagemeta=''
 count=0
@@ -65,7 +69,7 @@ def update_crop(img, x1, x2, y1, y2, mask_name):
 	axes5[0].imshow(image_cropped, cmap='gray')
 
 	mask0=np.zeros(img[0].shape, dtype=bool)
-	outnames=glob.glob(theimagemeta+'/mask_tf{}_{}_cell*.json'.format(count, mask_name))
+	outnames=glob.glob(os.path.join(theimagemeta, 'mask_tf{}_{}_cell*.json'.format(count, mask_name)))
 	for c in range(len(outnames)):
 		f = open(outnames[c])
 		data = json.load(f)
@@ -79,9 +83,7 @@ def update_crop(img, x1, x2, y1, y2, mask_name):
 
 #_______________________________________________
 def update_segmentation(img, seg_npix=400, seg_thr=2.5, seg_delta=1):
-	outnames=glob.glob(theimagemeta+'/mask_tf{}_thr{}delta{}_cell*.json'.format(count,seg_thr,seg_delta))
-	print (theimagemeta+'/mask_tf{}_thr{}delta{}_cell*.json'.format(count,seg_thr,seg_delta))
-	print('eoeoeoeoeoeoeoee  e eoeoe e  ',outnames)
+	outnames=glob.glob(os.path.join(theimagemeta,'mask_tf{}_thr{}delta{}_cell*.json'.format(count,seg_thr,seg_delta)))
 	if len(outnames)==0:
 		seg.simpleSeg(img, theimagemeta, count, thr=seg_thr, delta=seg_delta, npix=seg_npix)
 
@@ -107,7 +109,7 @@ def update_figure(img,
 	axes4[1].cla()
 
 	masks=None
-	md_path=theimagemeta+'/metadata_tf{}.json'.format(count)
+	md_path=os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))
 	if not os.path.isfile(md_path):
 		print('no metadata for: ',md_path, ' will crash :) ')
 	
@@ -230,7 +232,8 @@ def update_figure(img,
 				f2 = open(tf)
 				data2 = json.load(f2)
 				intensity.append(data2['intensity'][ch]/data2['npixels'])
-				timelist=tf.split('/')[-1].split('_')
+				
+				timelist=os.path.split(tf)[-1].split('_')
 				for t in timelist:
 					if 'tf' in t: 
 						time.append(10*int(t.replace('tf','')))
@@ -264,15 +267,13 @@ def draw_figure(canvas, figure):
 #_______________________________________________
 def update_celllist(window):
 	cells_list=[]
-	if os.path.isfile(theimagemeta+'/metadata_tf{}.json'.format(count)):
-		tf_file = open(theimagemeta+'/metadata_tf{}.json'.format(count))
+	if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))):
+		tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
 		tf_data = json.load(tf_file)
 		for cell in tf_data['cells']:cells_list.append(cell)
 	cells_list.sort()
 	window['-CELLLIST-'].update(values=cells_list)
 
-path ="/Users/helsens/data/singleCell/"
-metadatapath=path+'metadata/'
 
 timelaps_list = os.listdir(metadatapath)
 timelaps_list = [x for x in timelaps_list if x[0]!='.' and 'metadata' not in x]
@@ -445,7 +446,7 @@ while True:
 		position_list_long=project_data['positions']
 		position_list=[]
 		for p in position_list_long:
-			position_list.append(p.split('/')[-1].replace('.nd2','').replace('.tif',''))
+			position_list.append(os.path.split(p)[-1].replace('.nd2','').replace('.tif',''))
 		position_list.sort()	
 		window['-POSITIONSLIST-'].update(values=position_list)
 
@@ -609,8 +610,8 @@ while True:
 	if event=='-CELLLIST-' or event=='-MASKLIST-':
 		fig5_agg.get_tk_widget().forget()
 
-		if os.path.isfile(theimagemeta+'/metadata_tf{}.json'.format(count)):
-			tf_file = open(theimagemeta+'/metadata_tf{}.json'.format(count))
+		if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))):
+			tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
 			tf_data = json.load(tf_file)
 			mask = tf_data["cells"][values['-CELLLIST-']]['mask']
 			if os.path.isfile(mask):
@@ -621,12 +622,12 @@ while True:
 				xcoords=[x[0] for x in coords]
 				ycoords=[x[1] for x in coords]
 
-				update_crop(image[count], min(ycoords)-5, max(ycoords)+5,min(xcoords)-5, max(xcoords)+5, mask.split('/')[-1].split('_')[2])
+				update_crop(image[count], min(ycoords)-5, max(ycoords)+5,min(xcoords)-5, max(xcoords)+5, os.path.split(mask)[-1].split('_')[2])
 				fig5_agg = draw_figure(window['-CANVAS5-'].TKCanvas, fig5)
 
 	if event=='-MASKLIST-':
 		fig5_agg.get_tk_widget().forget()
-		mask = theimagemeta+'/mask_tf{}_{}_{}.json'.format(count, values['-MASKLIST-'], values['-CELLLIST-'])
+		mask = os.path.join(theimagemeta,'mask_tf{}_{}_{}.json'.format(count, values['-MASKLIST-'], values['-CELLLIST-']))
 		if os.path.isfile(mask):
 			mask_file = open(mask)
 			mask_data = json.load(mask_file)
@@ -635,18 +636,18 @@ while True:
 			xcoords=[x[0] for x in coords]
 			ycoords=[x[1] for x in coords]
 
-			update_crop(image[count], min(ycoords)-5, max(ycoords)+5,min(xcoords)-5, max(xcoords)+5, mask.split('/')[-1].split('_')[2])
+			update_crop(image[count], min(ycoords)-5, max(ycoords)+5,min(xcoords)-5, max(xcoords)+5, os.path.split(mask)[-1].split('_')[2])
 			fig5_agg = draw_figure(window['-CANVAS5-'].TKCanvas, fig5)
 
 
 	if event=='-CELLLIST-' or event == '-CELLMETADATASUBMIT-': #event=='-MASKLIST-' or event=='-CHECKLIST-' or event=='-ALIVELIST-' or event=='-STATUSLIST-':
-		if os.path.isfile(theimagemeta+'/metadata_tf{}.json'.format(count)):
-			tf_file = open(theimagemeta+'/metadata_tf{}.json'.format(count))
+		if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))):
+			tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
 			tf_data = json.load(tf_file)
 			cell_data = tf_data["cells"][values['-CELLLIST-']]
 
 			masklist=glob.glob(os.path.join(theimagemeta,'mask_tf{}_*_{}.json'.format(count, values['-CELLLIST-'])))
-			masklist=[x.split('/')[-1].split('_')[2] for x in masklist]
+			masklist=[os.path.split(x)[-1].split('_')[2] for x in masklist]
 			masklist.sort()
 			window['-MASKLIST-'].update('',values=masklist)
 			window['-CHECKLIST-'].update('')
@@ -654,7 +655,7 @@ while True:
 			window['-STATUSLIST-'].update('')
 			window['-DIVIDINGLIST-'].update('')
 
-			window['-MASKTEXT2-'].update(tf_data["cells"][values['-CELLLIST-']]['mask'].split('/')[-1].split('_')[2])
+			window['-MASKTEXT2-'].update(os.path.split(tf_data["cells"][values['-CELLLIST-']]['mask'])[-1].split('_')[2])
 			window['-CHECKTEXT2-'].update(tf_data["cells"][values['-CELLLIST-']]['valid'])
 			window['-ALIVETEXT2-'].update(tf_data["cells"][values['-CELLLIST-']]['alive'])
 			window['-STATUSTEXT2-'].update(tf_data["cells"][values['-CELLLIST-']]['status'])
@@ -668,11 +669,11 @@ while True:
 				if values['-DIVIDINGLIST-']!='': tf_data["cells"][values['-CELLLIST-']]['isdividing']=values['-DIVIDINGLIST-']
 
 				jsontf_object = json.dumps(tf_data, indent=4)
-				outnametf=theimagemeta+'/metadata_tf{}.json'.format(count)
+				outnametf=os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))
 				with open(outnametf, "w") as outfiletf:
 					outfiletf.write(jsontf_object)
 
-				window['-MASKTEXT2-'].update(tf_data["cells"][values['-CELLLIST-']]['mask'].split('/')[-1].split('_')[2])
+				window['-MASKTEXT2-'].update(os.path.split(tf_data["cells"][values['-CELLLIST-']]['mask'])[-1].split('_')[2])
 				window['-CHECKTEXT2-'].update(tf_data["cells"][values['-CELLLIST-']]['valid'])
 				window['-ALIVETEXT2-'].update(tf_data["cells"][values['-CELLLIST-']]['alive'])
 				window['-STATUSTEXT2-'].update(tf_data["cells"][values['-CELLLIST-']]['status'])
@@ -698,19 +699,19 @@ while True:
 
 	if event == '-TIMEFRAMEMETADATASUBMIT-':
 		window['-SKIPFRAMELIST-'].update('')
-		if os.path.isfile(theimagemeta+'/metadata_tf{}.json'.format(count)):
-			tf_file = open(theimagemeta+'/metadata_tf{}.json'.format(count))
+		if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))):
+			tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
 			tf_data = json.load(tf_file)
 			if values['-SKIPFRAMELIST-']!='': tf_data["skipframe"]=values['-SKIPFRAMELIST-']
 			jsontf_object = json.dumps(tf_data, indent=4)
-			outnametf=theimagemeta+'/metadata_tf{}.json'.format(count)
+			outnametf=os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))
 			with open(outnametf, "w") as outfiletf:
 				outfiletf.write(jsontf_object)
 			window['-SKIPFRAMETEXT2-'].update(tf_data["skipframe"])
 
 
-	if os.path.isfile(theimagemeta+'/metadata_tf{}.json'.format(count)):
-		tf_file = open(theimagemeta+'/metadata_tf{}.json'.format(count))
+	if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))):
+		tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
 		tf_data = json.load(tf_file)
 		window['-SKIPFRAMETEXT2-'].update(tf_data["skipframe"])
 
