@@ -1,0 +1,10 @@
+name: cellseg
+
+dependencies:
+  - conda-forge::pysimplegui
+  - conda-forge::matplotlib
+  - conda-forge::numpy
+  - conda-forge::scipy
+  - scikit-image
+  - conda-forge::nd2reader
+  #- conda-forge::apoc-backend
