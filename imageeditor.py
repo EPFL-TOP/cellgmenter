@@ -155,12 +155,14 @@ def update_figure(img,
 	axes1[0].add_patch(rectb)
 
 
+	if md_data['skipframe']=="True":
+		axes1[0].text(0.25, 0.1, 'SKIP FRAME',  fontsize=15, horizontalalignment='center', verticalalignment='center', color='white', transform=axes1[0].transAxes)
 
-	
 	for c in range(len(outnames)):
 		f = open(outnames[c])
 		data = json.load(f)
-
+		validtxt=''
+		if md_data['cells'][data['label']]['valid']=="False":validtxt=" not valid"
 		if md_data['cells'][data['label']]['alive']=="True": axes1[0].text(data['center'][1], data['center'][0]-50, data['label'], fontsize=10, horizontalalignment='center', verticalalignment='center', color='white')
 		else:axes1[0].text(data['center'][1], data['center'][0]-50, data['label'], fontsize=10, horizontalalignment='center', verticalalignment='center', color='black')
 		axes1[0].scatter(data['center'][1], data['center'][0], color='white', marker="x", s=15) # plotting single point
