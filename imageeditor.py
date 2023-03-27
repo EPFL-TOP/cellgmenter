@@ -165,8 +165,8 @@ def update_figure(img,
 		data = json.load(f)
 		validtxt=''
 		if md_data['cells'][data['label']]['valid']=="False":validtxt=" not valid"
-		if md_data['cells'][data['label']]['alive']=="True": axes1[0].text(data['center'][1], data['center'][0]-50, data['label'], fontsize=10, horizontalalignment='center', verticalalignment='center', color='white')
-		else:axes1[0].text(data['center'][1], data['center'][0]-50, data['label'], fontsize=10, horizontalalignment='center', verticalalignment='center', color='black')
+		if md_data['cells'][data['label']]['alive']=="True": axes1[0].text(data['center'][1], data['center'][0]-50, data['label']+validtxt, fontsize=10, horizontalalignment='center', verticalalignment='center', color='white')
+		else:axes1[0].text(data['center'][1], data['center'][0]-50, data['label']+validtxt, fontsize=10, horizontalalignment='center', verticalalignment='center', color='black')
 		axes1[0].scatter(data['center'][1], data['center'][0], color='white', marker="x", s=15) # plotting single point
 		mask0=np.zeros(img[0].shape, dtype=bool)
 		for coord in data['coords']:
