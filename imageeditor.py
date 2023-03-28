@@ -43,7 +43,7 @@ count=0
 
 cellscolors=['b','r','g','c','m','y','k','w']
 cellsmarkers=['x','o','.']
-
+currentcell='cell0'
 
 
 def crop(image, x1, x2, y1, y2):
@@ -63,6 +63,7 @@ def crop(image, x1, x2, y1, y2):
 
 #_______________________________________________
 def update_crop(img, x1, x2, y1, y2, mask_name):
+
 	axes5 = fig5.axes
 	axes5[0].cla()
 	image_cropped = crop(img[0], x1, x2, y1, y2)
@@ -346,7 +347,7 @@ control_col = sg.Column([
 	[sg.Text("Valid: ", size=(10, 1), key='-CHECKTEXT-', font=AppFont), sg.Text("NA", size=(10, 1), key='-CHECKTEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-CHECKLIST-', size=(10, 1), font=AppFont)],
 	[sg.Text("Alive: ", size=(10, 1), key='-ALIVETEXT-', font=AppFont), sg.Text("NA", size=(10, 1), key='-ALIVETEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-ALIVELIST-', size=(10, 1), font=AppFont)],
 	[sg.Text("Status: ", size=(10, 1), key='-STATUSTEXT-', font=AppFont), sg.Text("NA", size=(10, 1), key='-STATUSTEXT2-', font=AppFont), sg.Combo(["single", "doublenuclei", "multiplecells", "pair"],enable_events=True,key='-STATUSLIST-', size=(10, 1), font=AppFont)],
-	[sg.Text("Dividing: ", size=(10, 1), key='-DIVIDINGTEXT-', font=AppFont), sg.Text("False", size=(10, 1), key='-DIVIDINGTEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-DIVIDINGLIST-', size=(10, 1), font=AppFont)],
+	[sg.Text("Dividing: ", size=(10, 1), key='-DIVIDINGTEXT-', font=AppFont), sg.Text("NA", size=(10, 1), key='-DIVIDINGTEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-DIVIDINGLIST-', size=(10, 1), font=AppFont)],
 
 
 	[sg.Submit('Timeframe Metadata',key='-TIMEFRAMEMETADATASUBMIT-', font=AppFont)],	 
@@ -398,11 +399,11 @@ while True:
 
 	if event == sg.WIN_CLOSED: break
 	
-	window['-MASKTEXT2-'].update('')
-	window['-CHECKTEXT2-'].update('')
-	window['-ALIVETEXT2-'].update('')
-	window['-STATUSTEXT2-'].update('')
-	window['-DIVIDINGTEXT2-'].update('')
+	#window['-MASKTEXT2-'].update('')
+	#window['-CHECKTEXT2-'].update('')
+	#window['-ALIVETEXT2-'].update('')
+	#window['-STATUSTEXT2-'].update('')
+	#window['-DIVIDINGTEXT2-'].update('')
 
 	if not values['-XGRADIENT-'].isnumeric() or not values['-YGRADIENT-'].isnumeric() or not values['-DXGRADIENT-'].isnumeric() or not values['-DYGRADIENT-'].isnumeric() :
 		sg.popup_no_buttons('Value should be numeric', title="WARNING", font=TabFont)
@@ -608,22 +609,23 @@ while True:
 		update_celllist(window)
 
 	if event=='-CELLLIST-' or event=='-MASKLIST-':
-		fig5_agg.get_tk_widget().forget()
+		currentcell=values['-CELLLIST-']
 
-		if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))):
-			tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
-			tf_data = json.load(tf_file)
-			mask = tf_data["cells"][values['-CELLLIST-']]['mask']
-			if os.path.isfile(mask):
-				mask_file = open(mask)
-				mask_data = json.load(mask_file)
-				center=mask_data['center']
-				coords=mask_data['coords']
-				xcoords=[x[0] for x in coords]
-				ycoords=[x[1] for x in coords]
 
-				update_crop(image[count], min(ycoords)-5, max(ycoords)+5,min(xcoords)-5, max(xcoords)+5, os.path.split(mask)[-1].split('_')[2])
-				fig5_agg = draw_figure(window['-CANVAS5-'].TKCanvas, fig5)
+#		if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))):
+#			tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
+#			tf_data = json.load(tf_file)
+#			mask = tf_data["cells"][values['-CELLLIST-']]['mask']
+#			if os.path.isfile(mask):
+#				mask_file = open(mask)
+#				mask_data = json.load(mask_file)
+#				center=mask_data['center']
+#				coords=mask_data['coords']
+#				xcoords=[x[0] for x in coords]
+#				ycoords=[x[1] for x in coords]
+#				print('===============udapte crop here===================')
+#				update_crop(image[count], min(ycoords)-5, max(ycoords)+5,min(xcoords)-5, max(xcoords)+5, os.path.split(mask)[-1].split('_')[2])
+#				fig5_agg = draw_figure(window['-CANVAS5-'].TKCanvas, fig5)
 
 	if event=='-MASKLIST-':
 		fig5_agg.get_tk_widget().forget()
@@ -714,7 +716,23 @@ while True:
 		tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
 		tf_data = json.load(tf_file)
 		window['-SKIPFRAMETEXT2-'].update(tf_data["skipframe"])
-
+		if len(tf_data["cells"])>0:
+			mask = tf_data["cells"][currentcell]['mask']
+			if os.path.isfile(mask):
+				mask_file = open(mask)
+				mask_data = json.load(mask_file)
+				center=mask_data['center']
+				coords=mask_data['coords']
+				xcoords=[x[0] for x in coords]
+				ycoords=[x[1] for x in coords]
+				fig5_agg.get_tk_widget().forget()
+				update_crop(image[count], min(ycoords)-5, max(ycoords)+5,min(xcoords)-5, max(xcoords)+5, os.path.split(mask)[-1].split('_')[2])
+				fig5_agg = draw_figure(window['-CANVAS5-'].TKCanvas, fig5)
+				window['-MASKTEXT2-'].update(os.path.split(tf_data["cells"][currentcell]['mask'])[-1].split('_')[2])
+				window['-CHECKTEXT2-'].update(tf_data["cells"][currentcell]['valid'])
+				window['-ALIVETEXT2-'].update(tf_data["cells"][currentcell]['alive'])
+				window['-STATUSTEXT2-'].update(tf_data["cells"][currentcell]['status'])
+				window['-DIVIDINGTEXT2-'].update(tf_data["cells"][currentcell]['isdividing'])
 
 	#[sg.Submit('TimeFrame Metadata',key='-TIMEFRAMEMETADATASUBMIT-', font=AppFont)],	  
 	#[sg.Text("Cell", size=(10, 1), key='-CELLTEXT-', font=AppFont), sg.Combo([],enable_events=True,key='-CELLLIST-', size=(20, 1), font=AppFont)],
