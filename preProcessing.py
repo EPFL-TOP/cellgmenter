@@ -3,7 +3,9 @@ import reader as myread
 import os
 import glob
 import json
-testclement=True
+import apoc
+
+testclement=False
 
 #use windows or linux path here
 path ="/Users/helsens/data/singleCell"
@@ -16,6 +18,9 @@ project_list = os.listdir(path)
 project_list = [x for x in project_list if x[0]!='.' and 'metadata' not in x]
 project_list.sort()
 print('project list ',project_list)
+
+clf = apoc.PixelClassifier(opencl_filename="pixel_classification.cl")
+
 
 
 for proj in project_list:
@@ -52,6 +57,7 @@ for proj in project_list:
 
     #Check if all the positions have metadata
     for pos in position_list:
+        print('positon = ', pos )
         if testclement and 'wsc_epfl-wscl_060_xy05' not in pos:continue
 
         position_dir=os.path.join(path_meta, proj, os.path.split(pos)[-1].replace('.nd2','').replace('.tif',''))
@@ -86,10 +92,13 @@ for proj in project_list:
         if   '.nd2' in os.path.split(position_data['name'])[-1]: image = myread.nd2reader(position_data['name'])
         elif '.tif' in os.path.split(position_data['name'])[-1]: image = myread.tifreader(position_data['name'])
         else: print('unsupported image format')
+        print('simple seg')
         for img in range(len(image)):
             timeframe_meta=glob.glob(os.path.join(position_dir+'mask_tf{}_thr{}delta{}_cell*.json'.format(img,2.,2)))
             if len(timeframe_meta)==0:
                 seg.simpleSeg(image[img], position_dir, img, thr=2., delta=2, npix=400)
+        print('apoc seg')
+        seg.apocSeg(clf, image, position_dir, npix=400)
 
     with open(project_meta, "w") as outfile_proj:
         project_data['positions'].sort()

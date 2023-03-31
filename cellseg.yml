@@ -1,10 +1,18 @@
+#https://github.com/numpy/numpy/issues/12970
+#https://github.com/conda-forge/numpy-feedstock/issues/126
+#https://towardsdatascience.com/how-to-install-miniconda-x86-64-apple-m1-side-by-side-on-mac-book-m1-a476936bfaf0
+
 name: cellseg
 
 dependencies:
+  - python
+  - conda-forge::numpy
   - conda-forge::pysimplegui
   - conda-forge::matplotlib
-  - conda-forge::numpy
   - conda-forge::scipy
   - scikit-image
   - conda-forge::nd2reader
-  #- conda-forge::apoc-backend
+  - numba::numba
+  - conda-forge::opencv
+  - conda-forge::apoc-backend
+  - conda-forge::ocl_icd_wrapper_apple

@@ -7,6 +7,7 @@ import glob, os, sys
 import matplotlib.patches as patches
 import scipy.stats as stats
 import json
+import math
 import segmentation as seg
 import reader as myread
 #np.set_printoptions(threshold=sys.maxsize)
@@ -32,6 +33,10 @@ fig3.add_subplot(212).plot([],[])
 fig4 = matplotlib.figure.Figure(figsize=(10,5))
 fig4.add_subplot(121).plot([],[])
 fig4.add_subplot(122).plot([],[])
+
+#intensity for all positions
+fig6 = matplotlib.figure.Figure(figsize=(20,10))
+
 
 #use windows or linux path here
 path ="/Users/helsens/data/singleCell"
@@ -197,7 +202,7 @@ def update_figure(img,
 	axes4[0].set_xlabel('bright field intensity')
 	axes4[0].text(0.025, 0.9,  'Mean:\t{:.1f}'.expandtabs().format(np.mean(boxint)), fontsize=10, horizontalalignment='left', transform=axes4[0].transAxes)
 	axes4[0].text(0.025, 0.85, 'Std:\t{:.1f}'.expandtabs().format(np.std(boxint)), fontsize=10, horizontalalignment='left',  transform=axes4[0].transAxes)
-	axes4[0].text(0.025, 0.8, 'Npix:\t  {}'.expandtabs().format(len(boxint)), fontsize=10, horizontalalignment='left',  transform=axes4[0].transAxes)
+	axes4[0].text(0.025, 0.8,  'Npix:\t  {}'.expandtabs().format(len(boxint)), fontsize=10, horizontalalignment='left',  transform=axes4[0].transAxes)
 
 	xgaus = np.linspace(np.mean(boxint) - 3*np.std(boxint), np.mean(boxint) + 3*np.std(boxint), 100)
 	axes4[0].plot(xgaus, stats.norm.pdf(xgaus, np.mean(boxint), np.std(boxint)))	
@@ -273,7 +278,66 @@ def update_celllist(window):
 		tf_data = json.load(tf_file)
 		for cell in tf_data['cells']:cells_list.append(cell)
 	cells_list.sort()
-	window['-CELLLIST-'].update(values=cells_list)
+	window['-CELLLIST-'].update(currentcell, values=cells_list)
+
+
+#_______________________________________________
+def update_intensity_summary(npos, timelaps):
+	axes6 = fig6.axes
+	for np in range(npos):
+		axes6[np].cla()
+	
+	poslist=glob.glob(os.path.join(timelaps,os.path.split(timelaps)[-1]+"*"))
+
+	for pos in range(len(poslist)):
+		mask_list={}
+		tf_list=glob.glob(os.path.join(poslist[pos],'metadata_tf*.json'))
+		for tf in tf_list:
+			f = open(tf)
+			data = json.load(f)
+			for cell in data['cells']:
+				found=False
+				for cell2 in mask_list:
+					if cell==cell2:found=True
+				if found:mask_list[cell].append(data['cells'][cell]['mask'])
+				else: mask_list[cell]=[data['cells'][cell]['mask']]
+		intensities={}
+		for cell in mask_list:
+			ch0_int=[]
+			ch1_int=[]
+			ch2_int=[]
+			ch_tf=[]
+			for mask in mask_list[cell]:
+				fm = open(mask)
+				datam = json.load(fm)
+				for ch in range(int(datam["nchannels"])):
+					if ch==0:ch0_int.append(datam["intensity"][ch]/datam["npixels"])
+					if ch==1:ch1_int.append(datam["intensity"][ch]/datam["npixels"])
+					if ch==2:ch2_int.append(datam["intensity"][ch]/datam["npixels"])
+				ch_tf.append(int(os.path.split(mask)[-1].split("_")[1].replace('tf','')))
+			
+			zipped_lists = zip(ch_tf, ch0_int)
+			sorted_pairs = sorted(zipped_lists)
+			tuples = zip(*sorted_pairs)
+			time, ch0_int= [ list(tuple) for tuple in  tuples]
+
+			zipped_lists = zip(ch_tf, ch1_int)
+			sorted_pairs = sorted(zipped_lists)
+			tuples = zip(*sorted_pairs)
+			time, ch1_int= [ list(tuple) for tuple in  tuples]
+
+			zipped_lists = zip(ch_tf, ch2_int)
+			sorted_pairs = sorted(zipped_lists)
+			tuples = zip(*sorted_pairs)
+			time, ch2_int= [ list(tuple) for tuple in  tuples]
+
+
+			axes6[pos].plot(time, ch1_int, cellscolors[int(cell.replace('cell',''))]+'-', label="ch1_cell{}".format(cell.replace('cell','')))
+			axes6[pos].plot(time, ch2_int, cellscolors[int(cell.replace('cell',''))]+'-', label="ch2_cell{}".format(cell.replace('cell','')))
+			axes6[pos].text(0.5, 0.9, os.path.split(poslist[pos])[-1], fontsize=10, horizontalalignment='left', transform=axes6[pos].transAxes)
+			intensities[cell]={'ch0':[ch0_int,time], 'ch1':[ch1_int,time], 'ch2':[ch2_int,time]}
+
+
 
 
 timelaps_list = os.listdir(metadatapath)
@@ -365,11 +429,8 @@ image_col = sg.Column([
 	])
 layoutTF = [[control_col,image_col]]
 
-lt2=sg.Text("EmailID:")
-lt3=sg.Text("Mob No:")
-a21=sg.Input("", key='-ID-')
-a22=sg.Input("", key='-MOB-')
-tab2=[[lt2, a21], [lt3, a22]]
+image_col2 = [sg.Canvas(key = '-CANVAS6-')]
+tab2=[image_col2]
 
 layout = [[sg.TabGroup([
    [sg.Tab('Time frame', layoutTF, font=TabFont),
@@ -388,6 +449,7 @@ fig2_agg = draw_figure(window['-CANVAS2-'].TKCanvas, fig2)
 fig3_agg = draw_figure(window['-CANVAS3-'].TKCanvas, fig3)
 fig4_agg = draw_figure(window['-CANVAS4-'].TKCanvas, fig4)
 fig5_agg = draw_figure(window['-CANVAS5-'].TKCanvas, fig5)
+fig6_agg = draw_figure(window['-CANVAS6-'].TKCanvas, fig6)
 
 while True:
 	position_list=[]
@@ -399,11 +461,6 @@ while True:
 
 	if event == sg.WIN_CLOSED: break
 	
-	#window['-MASKTEXT2-'].update('')
-	#window['-CHECKTEXT2-'].update('')
-	#window['-ALIVETEXT2-'].update('')
-	#window['-STATUSTEXT2-'].update('')
-	#window['-DIVIDINGTEXT2-'].update('')
 
 	if not values['-XGRADIENT-'].isnumeric() or not values['-YGRADIENT-'].isnumeric() or not values['-DXGRADIENT-'].isnumeric() or not values['-DYGRADIENT-'].isnumeric() :
 		sg.popup_no_buttons('Value should be numeric', title="WARNING", font=TabFont)
@@ -437,6 +494,8 @@ while True:
 
 
 	if event == '-TIMELAPSLIST-':
+		currentcell='cell0'
+
 		timelaps=values['-TIMELAPSLIST-']
 		project_meta=os.path.join(metadatapath, timelaps, 'project.json')
 		if not os.path.isfile(project_meta): 
@@ -451,7 +510,16 @@ while True:
 		position_list.sort()	
 		window['-POSITIONSLIST-'].update(values=position_list)
 
+		fig6_agg.get_tk_widget().forget()
+		plt.clf()
+		xrow=int(math.sqrt(project_data['numberofpos']))+1
+		for sp in range(1,project_data['numberofpos']+1):
+			fig6.add_subplot(xrow,xrow,sp).plot([],[])
+		update_intensity_summary(project_data['numberofpos'], os.path.join(metadatapath, timelaps))
+		fig6_agg = draw_figure(window['-CANVAS6-'].TKCanvas, fig6)
+
 	if event == '-POSITIONSLIST-':
+		currentcell='cell0'
 		position=values['-POSITIONSLIST-']
 		position_meta=os.path.join(metadatapath, timelaps, position,'position.json')
 		if not os.path.isfile(position_meta): 
@@ -612,21 +680,6 @@ while True:
 		currentcell=values['-CELLLIST-']
 
 
-#		if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))):
-#			tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
-#			tf_data = json.load(tf_file)
-#			mask = tf_data["cells"][values['-CELLLIST-']]['mask']
-#			if os.path.isfile(mask):
-#				mask_file = open(mask)
-#				mask_data = json.load(mask_file)
-#				center=mask_data['center']
-#				coords=mask_data['coords']
-#				xcoords=[x[0] for x in coords]
-#				ycoords=[x[1] for x in coords]
-#				print('===============udapte crop here===================')
-#				update_crop(image[count], min(ycoords)-5, max(ycoords)+5,min(xcoords)-5, max(xcoords)+5, os.path.split(mask)[-1].split('_')[2])
-#				fig5_agg = draw_figure(window['-CANVAS5-'].TKCanvas, fig5)
-
 	if event=='-MASKLIST-':
 		fig5_agg.get_tk_widget().forget()
 		mask = os.path.join(theimagemeta,'mask_tf{}_{}_{}.json'.format(count, values['-MASKLIST-'], values['-CELLLIST-']))
@@ -712,7 +765,7 @@ while True:
 			window['-SKIPFRAMETEXT2-'].update(tf_data["skipframe"])
 
 
-	if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))):
+	if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))) and not event=='-MASKLIST-':
 		tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
 		tf_data = json.load(tf_file)
 		window['-SKIPFRAMETEXT2-'].update(tf_data["skipframe"])

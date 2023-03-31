@@ -1,12 +1,19 @@
 import nd2reader as nd2
 import numpy as np
 from skimage.io import imread
+#import nd2
 
 #_______________________________________________
 def tifreader(path):
     image = imread(path)
     image = image.transpose(0,3,1,2)
     return image
+
+
+#def nd2reader_test(path):
+#    image = nd2.imread(path)
+#    print(image.shape)
+#    return image
 
 #_______________________________________________
 def nd2reader(path):

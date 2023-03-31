@@ -1,11 +1,95 @@
 from skimage.measure import label, regionprops
-from skimage.morphology import disk, binary_closing
+from skimage.morphology import disk, binary_closing, binary_dilation
 from scipy.ndimage import binary_fill_holes
 import numpy as np
+import numba as nb
+from numba.types import bool_
+import pyclesperanto_prototype as cle
+
 import json
 import glob, os, sys, math
 from pathlib import Path
-testclement=True
+
+gpu = False
+sigma = 50
+minimum_size=250
+# Functions
+def normalize_background(img, sigma, gpu):
+    
+    """
+    This function loads an image and performs the division of the input by a blurred filtered version of itself.
+    """
+    intensity_normalized = None
+    
+    if gpu:
+        pushed = cle.push(img)
+        intensity_normalized = cle.divide_by_gaussian_background(pushed, result_substract, sigma, sigma, 0)
+        intensity_normalized = np.asarray(intensity_normalized) #img is pulled from GPU memory
+    
+    else:
+        intensity_normalized = cle.divide_by_gaussian_background(img, intensity_normalized, sigma,sigma,0)
+        intensity_normalized = np.asarray(intensity_normalized)
+    
+    return intensity_normalized
+
+#_______________________________________________
+def apocSeg(clf, input, outdir, npix=300):
+    image=input[:,0,:,:]
+    normalize = normalize_background(image, sigma, gpu)
+    for count in range(normalize.shape[0]):
+        prediction = np.asarray(clf.predict(normalize[count])-1,dtype=np.uint8)
+        dilated = binary_dilation(prediction, disk(2))
+        closed = binary_closing(dilated, disk(4))
+        filled = binary_fill_holes(closed).astype(int)
+        label_im = label(filled)
+
+        regions=regionprops(label_im)
+        cells=[]
+        for r in regions:
+            if r.area>npix:
+                cells.append(r)
+        
+        previous_labels=[]
+        if count>0:
+            previous_labels = glob.glob(os.path.join(outdir, 'mask_tf{}_thr2.0delta2_cell*.json'.format(count-1)))
+        extracount=0
+        for c in range(len(cells)):
+            minDist=1000000000
+            celllabel='cell{}'.format(c)
+            for pl in previous_labels:
+                pl_file = open(pl)
+                pl_data = json.load(pl_file)
+                    
+                dist=math.sqrt((pl_data['center'][0]-cells[c].centroid[0])*(pl_data['center'][0]-cells[c].centroid[0])+
+                        (pl_data['center'][1]-cells[c].centroid[1])*(pl_data['center'][1]-cells[c].centroid[1]))
+                if dist<minDist: 
+                    minDist=dist
+                    celllabel=pl_data['label']
+
+            if minDist>50 and minDist<100000000:
+                celllabel='cell{}'.format(len(previous_labels)+extracount)
+                extracount+=1
+            intensities=[]
+            for i in range(len(input[count])):
+                intensity=0
+                for coord in cells[c].coords:
+                    intensity+=input[count][i][coord[0]][coord[1]]
+                intensities.append(intensity)
+            dic={
+                'npixels':cells[c].area,
+                'center':cells[c].centroid,
+                'nchannels':len(input[count]),
+                'intensity':intensities,
+                'label':celllabel,
+                'coords':cells[c].coords
+
+            }
+            json_object = json.dumps(dic, cls=NpEncoder)
+
+            # Writing to <out>.json
+            outname=os.path.join(outdir, 'mask_tf{}_apoc_{}.json'.format(count,celllabel))
+            with open(outname, "w") as outfile:
+                outfile.write(json_object)
 
 #_______________________________________________
 class NpEncoder(json.JSONEncoder):
@@ -19,23 +103,43 @@ class NpEncoder(json.JSONEncoder):
         return super(NpEncoder, self).default(obj)
 
 
+
+
 #_______________________________________________
-def simpleSeg(img,  outdir, count, thr=2., delta=2, npix=400):
-    print('========== simple segmentation')
-    if count>17 and testclement:return
-    image=img[0]
-    img_seeds=np.zeros(image.shape, dtype=bool)
-    for i in range(len(image)):
-        tmp=np.concatenate((image[i-5:i+5, 0:25].flatten(),image[i-5:i+5, len(image)-25:len(image)].flatten()), axis=None)
-        mean=np.mean(tmp)
-        std=np.std(tmp)
-        for j in range(len(image)):
-            tmp2=image[i-delta:i+delta, j-delta:j+delta]
+@nb.njit(fastmath = True)
+def fastiter(image, thr=2., delta=1):
+    img_seeds=np.zeros(image.shape, dtype=bool_)
+    for i in range(image.shape[0]):
+        bkg=[]
+        for ii in range(-5,5):
+            iii=ii+i
+            if iii<0 or iii>image.shape[0]-1:continue
+            for jj in range(0,25):
+                bkg.append(image[iii][jj])
+        bkg=np.array(bkg)
+        std=np.std(bkg)
+        for j in range(image.shape[1]):
+            sig=[]
+            for id in range(-delta, delta+1):
+                if id+i<0 or id+i>image.shape[0]-1:continue
+                for jd in range(-delta, delta+1):
+                    if jd+j<0 or jd+j>image.shape[1]-1:continue
+                    sig.append(image[i+id][j+jd])
 
-            flat=tmp2.flatten()
-            if np.std(flat)>thr*std:
+            if np.std(np.array(sig))>thr*std:
                 img_seeds[i][j]=True
+    return img_seeds
 
+
+
+
+
+#_______________________________________________
+def simpleSeg(img,  outdir, count, thr=2., delta=1, npix=400):
+    image=img[0]
+    img_seeds=fastiter(image, thr, delta)
+
+    #dilated = binary_dilation(img_seeds, disk(2))
     closed = binary_closing(img_seeds, disk(4))
     filled = binary_fill_holes(closed).astype(int)
     label_im = label(filled)
@@ -59,7 +163,6 @@ def simpleSeg(img,  outdir, count, thr=2., delta=2, npix=400):
                 
             dist=math.sqrt((pl_data['center'][0]-cells[c].centroid[0])*(pl_data['center'][0]-cells[c].centroid[0])+
                     (pl_data['center'][1]-cells[c].centroid[1])*(pl_data['center'][1]-cells[c].centroid[1]))
-            print('=================  ',dist)
             if dist<minDist: 
                 minDist=dist
                 celllabel=pl_data['label']
@@ -99,7 +202,7 @@ def simpleSeg(img,  outdir, count, thr=2., delta=2, npix=400):
 			'mask':cell,
         	'valid':'True', #Set to False if user find out this cell is bad
 		    'alive':'True', #True/False
-			'status':'NA',  #'single, doublenuclei, multiplecells, pair from a menu'
+			'status':'single',  #'single, doublenuclei, multiplecells, pair from a menu'
         	'isdividing':'False', #True/False', can span over multiple TF
             }
                 
