@@ -6,7 +6,7 @@ name: cellseg
 
 dependencies:
   - conda-forge::python=3.9
-  - conda-forge::numpy
+  - conda-forge::numpy=1.23
   - conda-forge::pysimplegui
   - conda-forge::matplotlib
   - conda-forge::scipy
