@@ -26,7 +26,7 @@ clf = apoc.PixelClassifier(opencl_filename="pixel_classification.cl")
 
 
 for proj in project_list:
-    if testclement and ('wsc_epfl-wscl_061' not in proj):continue
+    if testclement and ('wsc_epfl_061' not in proj):continue
     position_list=[]
     for p in glob.glob(os.path.join(path, proj, '*')):
         if 'metadata'not in p: position_list.append(p)
