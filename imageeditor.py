@@ -39,7 +39,8 @@ fig6 = matplotlib.figure.Figure(figsize=(20,10))
 
 
 #use windows or linux path here
-path ="/Users/helsens/data/singleCell"
+path = "/Users/helsens/data/singleCell"
+path = "C:\Users\Laurel\software\cellgmenter"
 metadatapath=os.path.join(path, "metadata")
 
 
