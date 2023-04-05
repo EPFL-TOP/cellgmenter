@@ -40,7 +40,9 @@ fig6 = matplotlib.figure.Figure(figsize=(20,10))
 
 #use windows or linux path here
 path = "/Users/helsens/data/singleCell"
-path = "/Users/Laurel/software/cellgmenter"
+
+path = r"E:\Laurel\WSC\NIS split multipoints"  
+
 metadatapath=os.path.join(path, "metadata")
 
 

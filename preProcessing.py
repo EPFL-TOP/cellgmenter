@@ -5,10 +5,12 @@ import glob
 import json
 import apoc
 
-testclement=False
+testclement=True
 
 #use windows or linux path here
 path ="/Users/helsens/data/singleCell"
+
+path = r"E:\Laurel\WSC\NIS split multipoints"  
 
 path_meta=os.path.join(path, "metadata")
 if not os.path.exists(path_meta):
@@ -24,7 +26,7 @@ clf = apoc.PixelClassifier(opencl_filename="pixel_classification.cl")
 
 
 for proj in project_list:
-    if testclement and 'wsc_epfl-wscl_060' not in proj:continue
+    if testclement and ('wsc_epfl-wscl_061' not in proj):continue
     position_list=[]
     for p in glob.glob(os.path.join(path, proj, '*')):
         if 'metadata'not in p: position_list.append(p)
@@ -58,7 +60,6 @@ for proj in project_list:
     #Check if all the positions have metadata
     for pos in position_list:
         print('positon = ', pos )
-        if testclement and 'wsc_epfl-wscl_060_xy05' not in pos:continue
 
         position_dir=os.path.join(path_meta, proj, os.path.split(pos)[-1].replace('.nd2','').replace('.tif',''))
         #position_dir=os.path.join(path_meta, proj, pos.split('/')[-1].replace('.nd2','').replace('.tif',''))
