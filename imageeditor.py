@@ -10,6 +10,8 @@ import json
 import math
 import segmentation as seg
 import reader as myread
+import time
+import _thread
 #np.set_printoptions(threshold=sys.maxsize)
 
 #image
@@ -37,9 +39,13 @@ fig4.add_subplot(122).plot([],[])
 #intensity for all positions
 fig6 = matplotlib.figure.Figure(figsize=(20,10))
 
+#quick position viewer
+fig7 = matplotlib.figure.Figure(figsize=(15,15))
+fig7.add_subplot(111).plot([],[])
+
 
 #use windows or linux path here
-path = "/Users/helsens/data/singleCell"
+#path = "/Users/helsens/data/singleCell"
 
 path = r"E:\Laurel\WSC\NIS split multipoints"  
 
@@ -47,11 +53,13 @@ metadatapath=os.path.join(path, "metadata")
 
 
 theimagemeta=''
+theimagemetaq=''
 count=0
 
 cellscolors=['b','r','g','c','m','y','k','w']
 cellsmarkers=['x','o','.']
 currentcell='cell0'
+currentcellquick='cell0'
 
 
 def crop(image, x1, x2, y1, y2):
@@ -95,6 +103,36 @@ def update_segmentation(img, seg_npix=400, seg_thr=2.5, seg_delta=1):
 	outnames=glob.glob(os.path.join(theimagemeta,'mask_tf{}_thr{}delta{}_cell*.json'.format(count,seg_thr,seg_delta)))
 	if len(outnames)==0:
 		seg.simpleSeg(img, theimagemeta, count, thr=seg_thr, delta=seg_delta, npix=seg_npix)
+
+
+#_______________________________________________
+def update_figure_quick(img, nimg):
+
+	masks=None
+	md_path=os.path.join(theimagemetaq,'metadata_tf{}.json'.format(tostop))
+	if not os.path.isfile(md_path):
+		print('no metadata for: ',md_path, ' will crash :) ')
+
+	md_file = open(md_path)
+	md_data = json.load(md_file)
+
+	axes = fig7.axes
+	axes[0].cla()
+	axes[0].imshow(img[0], cmap='gray')
+
+	outnames=[md_data['cells'][x]['mask'] for x in md_data['cells']]
+	for c in range(len(outnames)):
+		f = open(outnames[c])
+		data = json.load(f)
+		axes[0].plot(data['xcoords'],data['ycoords'],color='red',lw=1.5)
+		validtxt=''
+		if md_data['cells'][data['label']]['valid']==False:validtxt=" not valid"
+		if md_data['cells'][data['label']]['alive']==True: axes[0].text(data['center'][1], data['center'][0]-50, data['label']+validtxt, fontsize=12, horizontalalignment='center', verticalalignment='center', color='white')
+		else:axes[0].text(data['center'][1], data['center'][0]-50, data['label']+validtxt, fontsize=12, horizontalalignment='center', verticalalignment='center', color='black')
+
+	if md_data['skipframe']==True:
+		axes[0].text(0.1, 0.9, 'SKIP FRAME',  fontsize=15, horizontalalignment='center', verticalalignment='center', color='white', transform=axes[0].transAxes)
+	axes[0].text(0.1, 0.98, '{}/{}'.format(tostop+1,nimg),  fontsize=12, horizontalalignment='center', verticalalignment='center', color='white', transform=axes[0].transAxes)
 
 
 #_______________________________________________
@@ -166,15 +204,15 @@ def update_figure(img,
 	axes1[0].add_patch(rectb)
 
 
-	if md_data['skipframe']=="True":
+	if md_data['skipframe']==True:
 		axes1[0].text(0.25, 0.1, 'SKIP FRAME',  fontsize=15, horizontalalignment='center', verticalalignment='center', color='white', transform=axes1[0].transAxes)
 
 	for c in range(len(outnames)):
 		f = open(outnames[c])
 		data = json.load(f)
 		validtxt=''
-		if md_data['cells'][data['label']]['valid']=="False":validtxt=" not valid"
-		if md_data['cells'][data['label']]['alive']=="True": axes1[0].text(data['center'][1], data['center'][0]-50, data['label']+validtxt, fontsize=10, horizontalalignment='center', verticalalignment='center', color='white')
+		if md_data['cells'][data['label']]['valid']==False:validtxt=" not valid"
+		if md_data['cells'][data['label']]['alive']==True: axes1[0].text(data['center'][1], data['center'][0]-50, data['label']+validtxt, fontsize=10, horizontalalignment='center', verticalalignment='center', color='white')
 		else:axes1[0].text(data['center'][1], data['center'][0]-50, data['label']+validtxt, fontsize=10, horizontalalignment='center', verticalalignment='center', color='black')
 		axes1[0].scatter(data['center'][1], data['center'][0], color='white', marker="x", s=15) # plotting single point
 		mask0=np.zeros(img[0].shape, dtype=bool)
@@ -283,6 +321,32 @@ def update_celllist(window):
 	cells_list.sort()
 	window['-CELLLIST-'].update(currentcell, values=cells_list)
 
+#_______________________________________________
+def update_celllistquick(window):
+	cells_list=[]
+	tf_data=None
+	if os.path.isfile(os.path.join(theimagemetaq,'metadata_tf{}.json'.format(tostop))):
+		tf_file = open(os.path.join(theimagemetaq,'metadata_tf{}.json'.format(tostop)))
+		tf_data = json.load(tf_file)
+		for cell in tf_data['cells']:cells_list.append(cell)
+	cells_list.sort()
+	window['-CELLLISTQUICK-'].update(currentcellquick, values=cells_list)
+	window['-MASKTEXTQUICK-'].update(os.path.split(tf_data["cells"][currentcellquick]['mask'])[-1].split('_')[2])
+	window['-CHECKTEXTQUICK-'].update(tf_data["cells"][currentcellquick]['valid'])
+	window['-ALIVETEXTQUICK-'].update(tf_data["cells"][currentcellquick]['alive'])
+	window['-STATUSTEXTQUICK-'].update(tf_data["cells"][currentcellquick]['status'])
+	window['-DIVIDINGTEXTQUICK-'].update(tf_data["cells"][currentcellquick]['isdividing'])
+	window['-SKIPFRAMETEXTQUICK-'].update(tf_data["skipframe"])
+
+	masklist=glob.glob(os.path.join(theimagemetaq,'mask_tf{}_*_{}.json'.format(tostop, values['-CELLLISTQUICK-'])))
+	masklist=[os.path.split(x)[-1].split('_')[2] for x in masklist]
+	masklist.sort()
+	window['-MASKLISTQUICK-'].update('',values=masklist)
+	window['-CHECKLISTQUICK-'].update('')
+	window['-ALIVELISTQUICK-'].update('')
+	window['-STATUSLISTQUICK-'].update('')
+	window['-DIVIDINGLISTQUICK-'].update('')
+	window['-SKIPFRAMELISTQUICK-'].update('')
 
 #_______________________________________________
 def update_intensity_summary(npos, timelaps):
@@ -340,6 +404,83 @@ def update_intensity_summary(npos, timelaps):
 			axes6[pos].text(0.5, 0.9, os.path.split(poslist[pos])[-1], fontsize=10, horizontalalignment='left', transform=axes6[pos].transAxes)
 			intensities[cell]={'ch0':[ch0_int,time], 'ch1':[ch1_int,time], 'ch2':[ch2_int,time]}
 
+
+
+def update_figure_quick_loop(img):
+	
+	fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
+	global stop
+	global tostop
+	i = tostop
+
+	if event == '-TIMEFRAMESLIDERQUICK-':
+		stop=True
+		tostop=int(values['-TIMEFRAMESLIDERQUICK-'])-1
+		window['-TIMEFRAMESLIDERQUICK-'].update(tostop+1)
+		fig7_agg.get_tk_widget().forget()
+		update_figure_quick(imageq[tostop], len(imageq))
+		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
+		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(tostop+1,len(imageq)))
+		update_celllistquick(window)
+
+	if event == '-NEXTQUICK-':
+		stop=True
+		tostop+=1
+		if tostop==len(imageq):tostop=0
+		window['-TIMEFRAMESLIDERQUICK-'].update(tostop+1)
+		fig7_agg.get_tk_widget().forget()
+		update_figure_quick(imageq[tostop], len(imageq))
+		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
+		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(tostop+1,len(imageq)))
+		update_celllistquick(window)
+
+	if event == '-PREVQUICK-':
+		stop=True
+		tostop-=1
+		if tostop==-1:tostop=len(imageq)-1
+		window['-TIMEFRAMESLIDERQUICK-'].update(tostop+1)
+		fig7_agg.get_tk_widget().forget()
+		update_figure_quick(imageq[tostop], len(imageq))
+		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
+		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(tostop+1,len(imageq)))
+		update_celllistquick(window)
+
+	while i < len(imageq) and not stop and event == '-PLAYFQUICK-':
+		i+=1
+		if i==len(img)-1: i=0
+		tostop=i
+		window['-TIMEFRAMESLIDERQUICK-'].update(i+1)
+		fig7_agg.get_tk_widget().forget()
+		update_figure_quick(imageq[tostop], len(imageq))
+		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
+		window.Refresh()
+		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(tostop+1,len(imageq)))
+		if int(values['-LATENCYQUICKLIST-'])/1000.>0.: time.sleep(int(values['-LATENCYQUICKLIST-'])/1000.)
+		update_celllistquick(window)
+	
+	while i > -1 and not stop and event == '-PLAYBQUICK-':
+		i-=1
+		if i==-1: i=len(img)-1
+		tostop=i
+		window['-TIMEFRAMESLIDERQUICK-'].update(i+1)
+		fig7_agg.get_tk_widget().forget()
+		update_figure_quick(imageq[tostop], len(imageq))
+		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
+		window.Refresh()
+		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(tostop+1,len(imageq)))
+		if int(values['-LATENCYQUICKLIST-'])/1000.>0.: time.sleep(int(values['-LATENCYQUICKLIST-'])/1000.)
+		update_celllistquick(window)
+
+	if event =='-POSITIONSLISTQUICK-' or event == '-CELLMETADATASUBMITQUICK-' or event =='-TIMEFRAMEMETADATASUBMITQUICK-':
+		fig7_agg.get_tk_widget().forget()
+		if event =='-POSITIONSLISTQUICK-' :
+			update_figure_quick(imageq[0], len(imageq))
+		else:
+			update_figure_quick(imageq[tostop], len(imageq))
+		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
+		return
+	
+	if stop:return
 
 
 
@@ -409,20 +550,16 @@ control_col = sg.Column([
 	[sg.Text("", size=(10, 1),  font=AppFont)],
 
 	[sg.Submit('Cell Metadata',key='-CELLMETADATASUBMIT-', font=AppFont)],	  
-	[sg.Text("Cell", size=(10, 1), key='-CELLTEXT-', font=AppFont), sg.Combo([],enable_events=True,key='-CELLLIST-', size=(20, 1), font=AppFont)],
-	[sg.Text("Mask: ", size=(10, 1), key='-MASKTEXT-', font=AppFont), sg.Text("NA", size=(10, 1), key='-MASKTEXT2-', font=AppFont), sg.Combo([],enable_events=True,key='-MASKLIST-', size=(10, 1), font=AppFont)],
-	[sg.Text("Valid: ", size=(10, 1), key='-CHECKTEXT-', font=AppFont), sg.Text("NA", size=(10, 1), key='-CHECKTEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-CHECKLIST-', size=(10, 1), font=AppFont)],
-	[sg.Text("Alive: ", size=(10, 1), key='-ALIVETEXT-', font=AppFont), sg.Text("NA", size=(10, 1), key='-ALIVETEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-ALIVELIST-', size=(10, 1), font=AppFont)],
-	[sg.Text("Status: ", size=(10, 1), key='-STATUSTEXT-', font=AppFont), sg.Text("NA", size=(10, 1), key='-STATUSTEXT2-', font=AppFont), sg.Combo(["single", "doublenuclei", "multiplecells", "pair"],enable_events=True,key='-STATUSLIST-', size=(10, 1), font=AppFont)],
-	[sg.Text("Dividing: ", size=(10, 1), key='-DIVIDINGTEXT-', font=AppFont), sg.Text("NA", size=(10, 1), key='-DIVIDINGTEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-DIVIDINGLIST-', size=(10, 1), font=AppFont)],
-
+	[sg.Text("Cell",       size=(10, 1), font=AppFont), sg.Combo([],enable_events=True,key='-CELLLIST-', size=(20, 1), font=AppFont)],
+	[sg.Text("Mask: ",     size=(10, 1), font=AppFont), sg.Text("NA", size=(10, 1), key='-MASKTEXT2-', font=AppFont), sg.Combo([],enable_events=True,key='-MASKLIST-', size=(10, 1), font=AppFont)],
+	[sg.Text("Valid: ",    size=(10, 1), font=AppFont), sg.Text("NA", size=(10, 1), key='-CHECKTEXT2-', font=AppFont), sg.Combo([True,False],enable_events=True,key='-CHECKLIST-', size=(10, 1), font=AppFont)],
+	[sg.Text("Alive: ",    size=(10, 1), font=AppFont), sg.Text("NA", size=(10, 1), key='-ALIVETEXT2-', font=AppFont), sg.Combo([True,False],enable_events=True,key='-ALIVELIST-', size=(10, 1), font=AppFont)],
+	[sg.Text("Status: ",   size=(10, 1), font=AppFont), sg.Text("NA", size=(10, 1), key='-STATUSTEXT2-', font=AppFont), sg.Combo(["single", "doublenuclei", "multiplecells", "pair"],enable_events=True,key='-STATUSLIST-', size=(10, 1), font=AppFont)],
+	[sg.Text("Dividing: ", size=(10, 1), font=AppFont), sg.Text("NA", size=(10, 1), key='-DIVIDINGTEXT2-', font=AppFont), sg.Combo([True,False],enable_events=True,key='-DIVIDINGLIST-', size=(10, 1), font=AppFont)],
 
 	[sg.Submit('Timeframe Metadata',key='-TIMEFRAMEMETADATASUBMIT-', font=AppFont)],	 
-	[sg.Text("Skipframe: ", size=(10, 1), key='-SKIPFRAMETEXT-', font=AppFont), sg.Text("False", size=(10, 1), key='-SKIPFRAMETEXT2-', font=AppFont), sg.Combo(["True","False"],enable_events=True,key='-SKIPFRAMELIST-', size=(10, 1), font=AppFont)],
+	[sg.Text("Skipframe: ", size=(10, 1), font=AppFont), sg.Text("False", size=(10, 1), key='-SKIPFRAMETEXT2-', font=AppFont), sg.Combo([True,False],enable_events=True,key='-SKIPFRAMELIST-', size=(10, 1), font=AppFont)],
 
-	[sg.Submit('Position Metadata',key='-POSITIONMETADATASUBMIT-', font=AppFont)],	 
-
-	[sg.Submit('Project Metadata',key='-PROJECTMETADATASUBMIT-', font=AppFont)],	 
 
 
     ])
@@ -435,9 +572,41 @@ layoutTF = [[control_col,image_col]]
 image_col2 = [sg.Canvas(key = '-CANVAS6-')]
 tab2=[image_col2]
 
+image_col3 = sg.Column([[sg.Canvas(key = '-CANVAS7-')]])
+control_col3 = sg.Column([   
+	[sg.Text("Project",  size=(10, 1), font=AppFont), sg.Combo(timelaps_list, enable_events=True,key='-TIMELAPSLISTQUICK-', size=(20, 1), font=AppFont)],
+    [sg.Text("Position", size=(10, 1), font=AppFont), sg.Combo([],enable_events=True,key='-POSITIONSLISTQUICK-', size=(20, 1), font=AppFont)],
+	[sg.Slider(range=(0,0), orientation='h',change_submits=True, key='-TIMEFRAMESLIDERQUICK-', font=AppFont)],
+	[sg.Text("Image", size=(10, 1), font=AppFont), sg.Text("0/0", size=(10, 1), key='-TIMEFRAMECOUNTERQUICK-', font=AppFont)],
+	[sg.Submit('Play BWD',key='-PLAYBQUICK-', font=AppFont),sg.Submit('Pause',key='-STOPQUICK-', font=AppFont),sg.Submit('Play FWD',key='-PLAYFQUICK-', font=AppFont)],
+	[sg.Submit('Prev',key='-PREVQUICK-', font=AppFont),sg.Submit('Next',key='-NEXTQUICK-', font=AppFont),sg.Text("Latency (ms): ", size=(12, 1), key='-LATENCYQUICK-', font=AppFont), sg.Combo([0,10,100,250,500],default_value=0,enable_events=True,key='-LATENCYQUICKLIST-', size=(5, 1), font=AppFont)],
+
+	[],
+
+	
+
+	[sg.Submit('Cell Metadata',key='-CELLMETADATASUBMITQUICK-', font=AppFont)],	  
+	[sg.Text("Cell", size=(10, 1),       font=AppFont), sg.Combo([],enable_events=True,key='-CELLLISTQUICK-', size=(20, 1), font=AppFont)],
+	[sg.Text("Mask: ", size=(10, 1),     font=AppFont), sg.Text("NA", size=(10, 1), key='-MASKTEXTQUICK-', font=AppFont), sg.Combo([],key='-MASKLISTQUICK-', size=(10, 1), font=AppFont), sg.Checkbox('Prev', key = '-MASKPREVQUICK-', default=False, font=AppFont),  sg.Checkbox('Next', key = '-MASKNEXTQUICK-', default=False, font=AppFont)],
+	[sg.Text("Valid: ", size=(10, 1),    font=AppFont), sg.Text("NA", size=(10, 1), key='-CHECKTEXTQUICK-', font=AppFont), sg.Combo([True,False],key='-CHECKLISTQUICK-', size=(10, 1), font=AppFont), sg.Checkbox('Prev', key = '-CHECKPREVQUICK-', default=False, font=AppFont),  sg.Checkbox('Next', key = '-CHECKNEXTQUICK-', default=False, font=AppFont)],
+	[sg.Text("Alive: ", size=(10, 1),    font=AppFont), sg.Text("NA", size=(10, 1), key='-ALIVETEXTQUICK-', font=AppFont), sg.Combo([True,False],key='-ALIVELISTQUICK-', size=(10, 1), font=AppFont), sg.Checkbox('Prev', key = '-ALIVEPREVQUICK-', default=False, font=AppFont),  sg.Checkbox('Next', key = '-ALIVENEXTQUICK-', default=False, font=AppFont)],
+	[sg.Text("Status: ", size=(10, 1),   font=AppFont), sg.Text("NA", size=(10, 1), key='-STATUSTEXTQUICK-', font=AppFont), sg.Combo(["single", "doublenuclei", "multiplecells", "pair"],key='-STATUSLISTQUICK-', size=(10, 1), font=AppFont), sg.Checkbox('Prev', key = '-STATUSPREVQUICK-', default=False, font=AppFont),  sg.Checkbox('Next', key = '-STATUSNEXTQUICK-', default=False, font=AppFont)],
+	[sg.Text("Dividing: ", size=(10, 1), font=AppFont), sg.Text("NA", size=(10, 1), key='-DIVIDINGTEXTQUICK-', font=AppFont), sg.Combo([True,False],key='-DIVIDINGLISTQUICK-', size=(10, 1), font=AppFont), sg.Checkbox('Prev', key = '-DIVIDINGPREVQUICK-', default=False, font=AppFont),  sg.Checkbox('Next', key = '-DIVIDINGNEXTQUICK-', default=False, font=AppFont)],
+
+	[sg.Submit('Timeframe Metadata',key='-TIMEFRAMEMETADATASUBMITQUICK-', font=AppFont)],	 
+	[sg.Text("Skipframe: ", size=(10, 1), font=AppFont), sg.Text("False", size=(10, 1), key='-SKIPFRAMETEXTQUICK-', font=AppFont), sg.Combo([True,False],enable_events=True,key='-SKIPFRAMELISTQUICK-', size=(10, 1), font=AppFont), sg.Checkbox('Prev', key = '-SKIPFRAMEPREVQUICK-', default=False, font=AppFont),  sg.Checkbox('Next', key = '-SKIPFRAMENEXTQUICK-', default=False, font=AppFont)],
+
+	])
+tab3=[[control_col3, image_col3]]
+
+
+
+
 layout = [[sg.TabGroup([
-   [sg.Tab('Time frame', layoutTF, font=TabFont),
-   sg.Tab('Time laps', tab2, font=TabFont)
+   [
+   sg.Tab('Time frame quick', tab3, font=TabFont),
+   sg.Tab('Time laps', tab2, font=TabFont),
+	sg.Tab('Time frame', layoutTF, font=TabFont),
    ]])]
 ]
 
@@ -453,28 +622,205 @@ fig3_agg = draw_figure(window['-CANVAS3-'].TKCanvas, fig3)
 fig4_agg = draw_figure(window['-CANVAS4-'].TKCanvas, fig4)
 fig5_agg = draw_figure(window['-CANVAS5-'].TKCanvas, fig5)
 fig6_agg = draw_figure(window['-CANVAS6-'].TKCanvas, fig6)
+fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
 
+
+
+stop = False
+tostop = 0
 while True:
 	position_list=[]
+	inquicktab=False
+	event, values = window.read()
 
-	event, values = window.read()#timeout=1000)
-	print('event ',event)
-	print('values ',values)
-	if event!=None and values!=None:timeframeslider = int(values['-TIMEFRAMESLIDER-'])
-
-	if event == sg.WIN_CLOSED: break
+	if event!=None and values!=None:
+		timeframeslider = int(values['-TIMEFRAMESLIDER-'])
 	
+	if event == sg.WIN_CLOSED: break
+
+	if event == '-TIMELAPSLISTQUICK-':
+		currentcellquick='cell0'
+		stop=True
+		tostop=0
+		inquicktab=True
+		timelaps=values['-TIMELAPSLISTQUICK-']
+		project_meta=os.path.join(metadatapath, timelaps, 'project.json')
+		if not os.path.isfile(project_meta): 
+			print('no metadata for project , exit ',project_meta)
+			sys.exit(3)
+		projectfile_data = open(project_meta)
+		project_data = json.load(projectfile_data)
+		position_list_long=project_data['positions']
+		position_list=[]
+		for p in position_list_long:
+			position_list.append(os.path.split(p)[-1].replace('.nd2','').replace('.tif',''))
+		position_list.sort()
+		window['-POSITIONSLISTQUICK-'].update(values=position_list)
+
+		fig6_agg.get_tk_widget().forget()
+		plt.clf()
+		xrow=int(math.sqrt(project_data['numberofpos']))+1
+		for sp in range(1,project_data['numberofpos']+1):
+			fig6.add_subplot(xrow,xrow,sp).plot([],[])
+		update_intensity_summary(project_data['numberofpos'], os.path.join(metadatapath, timelaps))
+		fig6_agg = draw_figure(window['-CANVAS6-'].TKCanvas, fig6)
+
+
+	if event == '-POSITIONSLISTQUICK-':
+		currentcellquick='cell0'
+		stop=True
+		tostop=0
+		inquicktab=True
+		position=values['-POSITIONSLISTQUICK-']
+		timelaps=values['-TIMELAPSLISTQUICK-']
+
+		position_meta=os.path.join(metadatapath, timelaps, position,'position.json')
+		if not os.path.isfile(position_meta): 
+			print('no metadata for position , exit ',position_meta)
+			sys.exit(3)
+		positionfile_data = open(position_meta)
+		position_data = json.load(positionfile_data)
+		
+		theimagemetaq=os.path.join(metadatapath, timelaps, position)
+		if not os.path.exists(theimagemetaq):
+			os.makedirs(theimagemetaq)
+		print('--------------------------------------theimagemeta quick',theimagemetaq)
+		update_celllistquick(window)
+
+
+		if position_data['name'].split('.')[-1]=='nd2':
+			imageq = myread.nd2reader(position_data['name'])
+		if position_data['name'].split('.')[-1]=='tif':
+			imageq = myread.tifreader(position_data['name'])
+		nimageq=len(imageq)
+		print('Nimages= ',len(imageq))
+		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(1,nimageq))
+		window['-TIMEFRAMESLIDERQUICK-'].update(value=1, range=(1,nimageq))
+
+
+	if event == '-PLAYBQUICK-' or event == '-PLAYFQUICK-' or event == '-TIMEFRAMESLIDERQUICK-' or event == '-PREVQUICK-' or event == '-NEXTQUICK-' \
+		or ('imageq' in locals() and event == '-POSITIONSLISTQUICK-') or event == '-CELLMETADATASUBMITQUICK-' or event =='-TIMEFRAMEMETADATASUBMITQUICK-':
+		stop = False
+		inquicktab=True
+		if tostop==len(imageq):tostop=0
+
+		_thread.start_new_thread(update_figure_quick_loop,(imageq,))
+	
+	if event == '-STOPQUICK-':
+		stop = True
+		inquicktab = True
+
+		print('-------------------tostop in stop  ',tostop)
+
+
+	if event=='-CELLLISTQUICK-' or event=='-MASKLISTQUICK-':
+		currentcellquick=values['-CELLLISTQUICK-']
+		inquicktab==True
+
+	def changemeta_range(meta, id_start, id_stop, tochange1, tochange2, cell='', tochange3=''):
+		for ij in range(id_start,id_stop):
+			if os.path.isfile(os.path.join(meta,'metadata_tf{}.json'.format(ij))):
+				tf_file = open(os.path.join(meta,'metadata_tf{}.json'.format(ij)))
+				tf_data = json.load(tf_file)
+				if tochange3!='': tf_data["cells"][cell][tochange1]=os.path.join(meta,"mask_tf{}_{}_{}.json".format(ij, values[tochange2], values[tochange3]))
+				elif cell!='':    tf_data["cells"][cell][tochange1]=values[tochange2]
+				else:             tf_data[tochange1]=values[tochange2]
+				jsontf_object = json.dumps(tf_data, indent=4)
+				outnametf=os.path.join(theimagemetaq,'metadata_tf{}.json'.format(ij))
+				with open(outnametf, "w") as outfiletf:
+					outfiletf.write(jsontf_object)
+
+	if event == '-CELLMETADATASUBMITQUICK-':
+		inquicktab==True
+		if os.path.isfile(os.path.join(theimagemetaq,'metadata_tf{}.json'.format(tostop))):
+			tf_file = open(os.path.join(theimagemetaq,'metadata_tf{}.json'.format(tostop)))
+			tf_data = json.load(tf_file)
+			tmpcell=values['-CELLLISTQUICK-']
+
+			masklist=glob.glob(os.path.join(theimagemetaq,'mask_tf{}_*_{}.json'.format(count, values['-CELLLISTQUICK-'])))
+			masklist=[os.path.split(x)[-1].split('_')[2] for x in masklist]
+			masklist.sort()
+
+			if values['-MASKLISTQUICK-']!='':     tf_data["cells"][tmpcell]['mask']=os.path.join(theimagemetaq,"mask_tf{}_{}_{}.json".format(tostop, values['-MASKLISTQUICK-'], values['-CELLLISTQUICK-']))
+			if values['-CHECKLISTQUICK-']!='':    tf_data["cells"][tmpcell]['valid']=values['-CHECKLISTQUICK-']
+			if values['-ALIVELISTQUICK-']!='':    tf_data["cells"][tmpcell]['alive']=values['-ALIVELISTQUICK-']
+			if values['-STATUSLISTQUICK-']!='':   tf_data["cells"][tmpcell]['status']=values['-STATUSLISTQUICK-']
+			if values['-DIVIDINGLISTQUICK-']!='': tf_data["cells"][tmpcell]['isdividing']=values['-DIVIDINGLISTQUICK-']
+
+			if values['-MASKPREVQUICK-'] == True: changemeta_range(theimagemetaq, 0, tostop, 'mask', '-MASKLISTQUICK-', tmpcell, '-CELLLISTQUICK-')
+			if values['-MASKNEXTQUICK-'] == True: changemeta_range(theimagemetaq, tostop+1, len(imageq), 'mask', '-MASKLISTQUICK-', tmpcell, '-CELLLISTQUICK-')
+
+			if values['-CHECKPREVQUICK-'] == True: changemeta_range(theimagemetaq, 0, tostop, 'valid', '-CHECKLISTQUICK-', tmpcell)
+			if values['-CHECKNEXTQUICK-'] == True: changemeta_range(theimagemetaq, tostop+1, len(imageq), 'valid', '-CHECKLISTQUICK-', tmpcell)
+
+			if values['-ALIVEPREVQUICK-'] == True: changemeta_range(theimagemetaq, 0, tostop, 'alive', '-ALIVELISTQUICK-', tmpcell)
+			if values['-ALIVENEXTQUICK-'] == True: changemeta_range(theimagemetaq, tostop+1, len(imageq), 'alive', '-ALIVELISTQUICK-', tmpcell)
+
+			if values['-STATUSPREVQUICK-'] == True: changemeta_range(theimagemetaq, 0, tostop, 'status', '-STATUSLISTQUICK-', tmpcell)
+			if values['-STATUSNEXTQUICK-'] == True: changemeta_range(theimagemetaq, tostop+1, len(imageq), 'status', '-STATUSLISTQUICK-', tmpcell)
+
+			if values['-DIVIDINGPREVQUICK-'] == True: changemeta_range(theimagemetaq, 0, tostop, 'isdividing', '-DIVIDINGLISTQUICK-', tmpcell)
+			if values['-DIVIDINGNEXTQUICK-'] == True: changemeta_range(theimagemetaq, tostop+1, len(imageq), 'isdividing', '-DIVIDINGLISTQUICK-', tmpcell)
+
+			jsontf_object = json.dumps(tf_data, indent=4)
+			outnametf=os.path.join(theimagemetaq,'metadata_tf{}.json'.format(tostop))
+			with open(outnametf, "w") as outfiletf:
+				outfiletf.write(jsontf_object)
+
+			window['-MASKTEXTQUICK-'].update(os.path.split(tf_data["cells"][tmpcell]['mask'])[-1].split('_')[2])
+			window['-CHECKTEXTQUICK-'].update(tf_data["cells"][tmpcell]['valid'])
+			window['-ALIVETEXTQUICK-'].update(tf_data["cells"][tmpcell]['alive'])
+			window['-STATUSTEXTQUICK-'].update(tf_data["cells"][tmpcell]['status'])
+			window['-DIVIDINGTEXTQUICK-'].update(tf_data["cells"][tmpcell]['isdividing'])
+
+
+			window['-CHECKLISTQUICK-'].update('')
+			window['-ALIVELISTQUICK-'].update('')
+			window['-STATUSLISTQUICK-'].update('')
+			window['-DIVIDINGLISTQUICK-'].update('')
+			window['-MASKPREVQUICK-'].update(False)
+			window['-MASKNEXTQUICK-'].update(False)
+			window['-CHECKPREVQUICK-'].update(False)
+			window['-CHECKNEXTQUICK-'].update(False)
+			window['-ALIVEPREVQUICK-'].update(False)
+			window['-ALIVENEXTQUICK-'].update(False)
+			window['-STATUSPREVQUICK-'].update(False)
+			window['-STATUSNEXTQUICK-'].update(False)
+			window['-DIVIDINGPREVQUICK-'].update(False)
+			window['-DIVIDINGNEXTQUICK-'].update(False)
+
+	if event == '-TIMEFRAMEMETADATASUBMITQUICK-':
+		inquicktab=True
+		if os.path.isfile(os.path.join(theimagemetaq,'metadata_tf{}.json'.format(tostop))):
+			tf_file = open(os.path.join(theimagemetaq,'metadata_tf{}.json'.format(tostop)))
+			tf_data = json.load(tf_file)
+			if values['-SKIPFRAMELISTQUICK-']!='': tf_data["skipframe"]=values['-SKIPFRAMELISTQUICK-']
+			jsontf_object = json.dumps(tf_data, indent=4)
+			outnametf=os.path.join(theimagemetaq,'metadata_tf{}.json'.format(tostop))
+			with open(outnametf, "w") as outfiletf:
+				outfiletf.write(jsontf_object)
+			
+			if values['-SKIPFRAMEPREVQUICK-'] == True: changemeta_range(theimagemetaq, 0, tostop, 'skipframe', '-SKIPFRAMELISTQUICK-')
+			if values['-SKIPFRAMENEXTQUICK-'] == True: changemeta_range(theimagemetaq, tostop+1, len(imageq), 'skipframe', '-SKIPFRAMELISTQUICK-')
+
+			window['-SKIPFRAMETEXTQUICK-'].update(tf_data["skipframe"])
+			window['-SKIPFRAMELISTQUICK-'].update('')
+			window['-SKIPFRAMEPREVQUICK-'].update(False)
+			window['-SKIPFRAMENEXTQUICK-'].update(False)
 
 	if not values['-XGRADIENT-'].isnumeric() or not values['-YGRADIENT-'].isnumeric() or not values['-DXGRADIENT-'].isnumeric() or not values['-DYGRADIENT-'].isnumeric() :
+		inquicktab=False
 		sg.popup_no_buttons('Value should be numeric', title="WARNING", font=TabFont)
 		continue
 
 	if event == '-SEGSUBMIT-':
+		inquicktab=False
 		update_segmentation(image[count], seg_npix=int(values['-SEGNPIX-']), seg_thr=float(values['-SEGTHR-']), seg_delta=int(values['-SEGDELTA-']))
 
 	if event == '-GRADIENTSUBMIT-' or event == '-HISTOLOGBOX-' or event == '-HISTOLOGCOUNT-' or \
 		event == '-BOXSUBMIT-' or event=='-HISTOBOXSUBMIT-'  or event=='-HISTOCONTSUBMIT-' or \
 		event == '-CHANNEL0-' or event =='-CHANNEL1-' or event=='-CHANNEL2-':
+		inquicktab=False
 		print('---------update figure')
 		fig1_agg.get_tk_widget().forget()
 		fig2_agg.get_tk_widget().forget()
@@ -497,6 +843,7 @@ while True:
 
 
 	if event == '-TIMELAPSLIST-':
+		inquicktab=False
 		currentcell='cell0'
 
 		timelaps=values['-TIMELAPSLIST-']
@@ -512,18 +859,20 @@ while True:
 			position_list.append(os.path.split(p)[-1].replace('.nd2','').replace('.tif',''))
 		position_list.sort()	
 		window['-POSITIONSLIST-'].update(values=position_list)
-
-		fig6_agg.get_tk_widget().forget()
-		plt.clf()
-		xrow=int(math.sqrt(project_data['numberofpos']))+1
-		for sp in range(1,project_data['numberofpos']+1):
-			fig6.add_subplot(xrow,xrow,sp).plot([],[])
-		update_intensity_summary(project_data['numberofpos'], os.path.join(metadatapath, timelaps))
-		fig6_agg = draw_figure(window['-CANVAS6-'].TKCanvas, fig6)
+		#fig6_agg.get_tk_widget().forget()
+		#plt.clf()
+		#xrow=int(math.sqrt(project_data['numberofpos']))+1
+		#for sp in range(1,project_data['numberofpos']+1):
+		#	fig6.add_subplot(xrow,xrow,sp).plot([],[])
+		#update_intensity_summary(project_data['numberofpos'], os.path.join(metadatapath, timelaps))
+		#fig6_agg = draw_figure(window['-CANVAS6-'].TKCanvas, fig6)
 
 	if event == '-POSITIONSLIST-':
+		inquicktab=False
 		currentcell='cell0'
 		position=values['-POSITIONSLIST-']
+		timelaps=values['-TIMELAPSLIST-']
+
 		position_meta=os.path.join(metadatapath, timelaps, position,'position.json')
 		if not os.path.isfile(position_meta): 
 			print('no metadata for position , exit ',position_meta)
@@ -547,6 +896,7 @@ while True:
 		print('Nimages= ',len(image))
 		window['-TIMEFRAMECOUNTER-'].update("{}/{}".format(1,nimage))
 		window['-TIMEFRAMESLIDER-'].update(value=1, range=(1,nimage))
+
 		print('---------first image')
 		fig1_agg.get_tk_widget().forget()
 		fig2_agg.get_tk_widget().forget()
@@ -567,8 +917,10 @@ while True:
 		fig5_agg = draw_figure(window['-CANVAS5-'].TKCanvas, fig5)
 		update_celllist(window)
 
+	
 
 	if count!=timeframeslider-1 and timeframeslider!=0:
+		inquicktab=False
 		print('---------slider image')
 		count=timeframeslider-1
 		fig1_agg.get_tk_widget().forget()
@@ -594,6 +946,7 @@ while True:
 		update_celllist(window)
 
 	if event == '-TIMEFRAMENEXT-':
+		inquicktab=False
 		print('---------next image')
 		count+=1
 		if count>len(image)-1:count=len(image)-1
@@ -621,6 +974,7 @@ while True:
 		update_celllist(window)
 
 	if event == '-TIMEFRAMEPREVIOUS-':
+		inquicktab=False
 		print('---------previous image')
 		count-=1
 		if count<0:count=0		
@@ -651,6 +1005,7 @@ while True:
 
 
 	if event == '-TIMEFRAMEGOTOBUTTON-':
+		inquicktab=False
 		print('---------go to image')
 		count=int(values['-TIMEFRAMEGOTO-'])-1
 		if count<1:count=0
@@ -680,10 +1035,12 @@ while True:
 		update_celllist(window)
 
 	if event=='-CELLLIST-' or event=='-MASKLIST-':
+		inquicktab=False
 		currentcell=values['-CELLLIST-']
 
 
 	if event=='-MASKLIST-':
+		inquicktab=False
 		fig5_agg.get_tk_widget().forget()
 		mask = os.path.join(theimagemeta,'mask_tf{}_{}_{}.json'.format(count, values['-MASKLIST-'], values['-CELLLIST-']))
 		if os.path.isfile(mask):
@@ -699,10 +1056,10 @@ while True:
 
 
 	if event=='-CELLLIST-' or event == '-CELLMETADATASUBMIT-': #event=='-MASKLIST-' or event=='-CHECKLIST-' or event=='-ALIVELIST-' or event=='-STATUSLIST-':
+		inquicktab=False
 		if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))):
 			tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
 			tf_data = json.load(tf_file)
-			cell_data = tf_data["cells"][values['-CELLLIST-']]
 
 			masklist=glob.glob(os.path.join(theimagemeta,'mask_tf{}_*_{}.json'.format(count, values['-CELLLIST-'])))
 			masklist=[os.path.split(x)[-1].split('_')[2] for x in masklist]
@@ -756,6 +1113,7 @@ while True:
 
 
 	if event == '-TIMEFRAMEMETADATASUBMIT-':
+		inquicktab=False
 		window['-SKIPFRAMELIST-'].update('')
 		if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))):
 			tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
@@ -768,7 +1126,8 @@ while True:
 			window['-SKIPFRAMETEXT2-'].update(tf_data["skipframe"])
 
 
-	if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))) and not event=='-MASKLIST-':
+	if os.path.isfile(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count))) and not event=='-MASKLIST-' and inquicktab==False:
+		print('-----------------       ',inquicktab)
 		tf_file = open(os.path.join(theimagemeta,'metadata_tf{}.json'.format(count)))
 		tf_data = json.load(tf_file)
 		window['-SKIPFRAMETEXT2-'].update(tf_data["skipframe"])

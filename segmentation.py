@@ -5,6 +5,7 @@ import numpy as np
 import numba as nb
 from numba.types import bool_
 import pyclesperanto_prototype as cle
+import matplotlib.pyplot as plt
 
 import json
 import glob, os, sys, math
@@ -51,7 +52,7 @@ def apocSeg(clf, input, outdir, npix=300):
         
         previous_labels=[]
         if count>0:
-            previous_labels = glob.glob(os.path.join(outdir, 'mask_tf{}_thr2.0delta2_cell*.json'.format(count-1)))
+            previous_labels = glob.glob(os.path.join(outdir, 'mask_tf{}_apoc_cell*.json'.format(count-1)))
         extracount=0
         for c in range(len(cells)):
             minDist=1000000000
@@ -75,13 +76,22 @@ def apocSeg(clf, input, outdir, npix=300):
                 for coord in cells[c].coords:
                     intensity+=input[count][i][coord[0]][coord[1]]
                 intensities.append(intensity)
+
+            mask0=np.zeros(image[0].shape, dtype=bool)
+            for coord in cells[c].coords:
+                mask0[coord[0]][coord[1]]=True
+            cs=plt.contour(mask0, [0.5],linewidths=1.2,  colors='red')
+            contcoords= cs.allsegs[0][0]
+
             dic={
                 'npixels':cells[c].area,
                 'center':cells[c].centroid,
                 'nchannels':len(input[count]),
                 'intensity':intensities,
                 'label':celllabel,
-                'coords':cells[c].coords
+                'coords':cells[c].coords,
+                'xcoords':contcoords[:,0],
+               'ycoords':contcoords[:,1]
 
             }
             json_object = json.dumps(dic, cls=NpEncoder)
@@ -176,13 +186,22 @@ def simpleSeg(img,  outdir, count, thr=2., delta=1, npix=400):
             for coord in cells[c].coords:
                 intensity+=img[i][coord[0]][coord[1]]
             intensities.append(intensity)
+
+        mask0=np.zeros(img[0].shape, dtype=bool)
+        for coord in cells[c].coords:
+            mask0[coord[0]][coord[1]]=True
+        cs=plt.contour(mask0, [0.5],linewidths=1.2,  colors='red')
+        contcoords= cs.allsegs[0][0]
+        
         dic={
             'npixels':cells[c].area,
             'center':cells[c].centroid,
             'nchannels':len(img),
             'intensity':intensities,
             'label':celllabel,
-            'coords':cells[c].coords
+            'coords':cells[c].coords,
+            'xcoords':contcoords[:,0],
+            'ycoords':contcoords[:,1]
 
         }
         json_object = json.dumps(dic, cls=NpEncoder)
@@ -200,15 +219,15 @@ def simpleSeg(img,  outdir, count, thr=2., delta=1, npix=400):
  
         celldic['cell{}'.format(cellid)]={
 			'mask':cell,
-        	'valid':'True', #Set to False if user find out this cell is bad
-		    'alive':'True', #True/False
+        	'valid':True, #Set to False if user find out this cell is bad
+		    'alive':True, #True/False
 			'status':'single',  #'single, doublenuclei, multiplecells, pair from a menu'
-        	'isdividing':'False', #True/False', can span over multiple TF
+        	'isdividing':False, #True/False', can span over multiple TF
             }
                 
 
     timeframedic={
-        'skipframe':'False', #false by default
+        'skipframe':False, #false by default
         'cells':celldic
             }
     jsontf_object = json.dumps(timeframedic, indent=4)

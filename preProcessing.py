@@ -8,7 +8,7 @@ import apoc
 testclement=True
 
 #use windows or linux path here
-path ="/Users/helsens/data/singleCell"
+#path ="/Users/helsens/data/singleCell"
 
 path = r"E:\Laurel\WSC\NIS split multipoints"  
 
@@ -24,9 +24,8 @@ print('project list ',project_list)
 clf = apoc.PixelClassifier(opencl_filename="pixel_classification.cl")
 
 
-
 for proj in project_list:
-    if testclement and ('wsc_epfl_061' not in proj):continue
+    if testclement and ('060' not in proj):continue
     position_list=[]
     for p in glob.glob(os.path.join(path, proj, '*')):
         if 'metadata'not in p: position_list.append(p)
