@@ -5,6 +5,7 @@ import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import glob, os, sys
 import matplotlib.patches as patches
+from matplotlib import gridspec
 import scipy.stats as stats
 import json
 import math
@@ -12,6 +13,10 @@ import segmentation as seg
 import reader as myread
 import time
 import _thread
+from scipy.interpolate import make_interp_spline, BSpline
+#from scipy.ndimage.filters import gaussian_filter1d
+from scipy.interpolate import interp1d
+
 #np.set_printoptions(threshold=sys.maxsize)
 
 #image
@@ -39,15 +44,22 @@ fig4.add_subplot(122).plot([],[])
 #intensity for all positions
 fig6 = matplotlib.figure.Figure(figsize=(20,10))
 
+
 #quick position viewer
+# create grid for different subplots
+spec = gridspec.GridSpec(ncols=1, nrows=2,
+                         width_ratios=[1], wspace=0.1,
+                         hspace=0.1, height_ratios=[2.5, 1])
 fig7 = matplotlib.figure.Figure(figsize=(15,15))
-fig7.add_subplot(111).plot([],[])
+fig7.add_subplot(spec[0]).plot([],[])
+fig7.add_subplot(spec[1]).plot([],[])
 
 
 #use windows or linux path here
-#path = "/Users/helsens/data/singleCell"
+path = "/Users/helsens/data/singleCell"
+#path = "/Volumes/Oates-Lab/Clement/singleCell"
 
-path = r"E:\Laurel\WSC\NIS split multipoints"  
+#path = r"E:\Laurel\WSC\NIS split multipoints"  
 
 metadatapath=os.path.join(path, "metadata")
 
@@ -60,6 +72,7 @@ cellscolors=['b','r','g','c','m','y','k','w']
 cellsmarkers=['x','o','.']
 currentcell='cell0'
 currentcellquick='cell0'
+intensities_list_quick=[]
 
 
 def crop(image, x1, x2, y1, y2):
@@ -106,7 +119,7 @@ def update_segmentation(img, seg_npix=400, seg_thr=2.5, seg_delta=1):
 
 
 #_______________________________________________
-def update_figure_quick(img, nimg):
+def update_figure_quick(img, nimg, zoom=False):
 
 	masks=None
 	md_path=os.path.join(theimagemetaq,'metadata_tf{}.json'.format(tostop))
@@ -115,16 +128,37 @@ def update_figure_quick(img, nimg):
 
 	md_file = open(md_path)
 	md_data = json.load(md_file)
-
+	box=40
 	axes = fig7.axes
 	axes[0].cla()
-	axes[0].imshow(img[0], cmap='gray')
+	axes[1].cla()
+	if zoom==False:
+		axes[0].imshow(img[0], cmap='gray')
+	else:
+		mask = md_data['cells'][values['-CELLLISTQUICK-']]['mask']
+		if os.path.isfile(mask):
+			mask_file = open(mask)
+			mask_data = json.load(mask_file)
+			center=mask_data['center']
+			#coords=mask_data['coords']
+			#xcoords=[x[0] for x in coords]
+			#ycoords=[x[1] for x in coords]
+			#image_cropped = crop(img[0], min(ycoords)-5, max(ycoords)+5,min(xcoords)-5, max(xcoords)+5)
+			image_cropped = crop(img[0], int(center[1])-box, int(center[1])+box, int(center[0])-box, int(center[0])+box)
+			axes[0].imshow(image_cropped, cmap='gray')
 
-	outnames=[md_data['cells'][x]['mask'] for x in md_data['cells']]
+	outnames=[[x, md_data['cells'][x]['mask']] for x in md_data['cells']]
 	for c in range(len(outnames)):
-		f = open(outnames[c])
+		f = open(outnames[c][1])
 		data = json.load(f)
-		axes[0].plot(data['xcoords'],data['ycoords'],color='red',lw=1.5)
+		if zoom==False:
+			axes[0].plot(data['xcoords'],data['ycoords'],color='red',lw=1.5)
+		else: 
+			#corectx=[x-min(ycoords)+5 for x in data['xcoords']]
+			#corecty=[x-min(xcoords)+5 for x in data['ycoords']]
+			corectx=[x-int(center[1])+box for x in data['xcoords']]
+			corecty=[x-int(center[0])+box for x in data['ycoords']]
+			if values['-CELLLISTQUICK-']==outnames[c][0]: axes[0].plot(corectx,corecty,color='red',lw=1.5)
 		validtxt=''
 		if md_data['cells'][data['label']]['valid']==False:validtxt=" not valid"
 		if md_data['cells'][data['label']]['alive']==True: axes[0].text(data['center'][1], data['center'][0]-50, data['label']+validtxt, fontsize=12, horizontalalignment='center', verticalalignment='center', color='white')
@@ -134,6 +168,25 @@ def update_figure_quick(img, nimg):
 		axes[0].text(0.1, 0.9, 'SKIP FRAME',  fontsize=15, horizontalalignment='center', verticalalignment='center', color='white', transform=axes[0].transAxes)
 	axes[0].text(0.1, 0.98, '{}/{}'.format(tostop+1,nimg),  fontsize=12, horizontalalignment='center', verticalalignment='center', color='white', transform=axes[0].transAxes)
 
+
+	for idx, item in enumerate(intensities_list_quick):
+		axes[1].plot(item[0], item[2], cellscolors[idx]+'.-', label="ch1_cell{}".format(idx))
+		axes[1].plot(item[0], item[3], cellscolors[idx]+'o-', label="ch2_cell{}".format(idx))
+		axes[1].plot(np.array(item[4]), np.array(item[2])[item[4]]+12, "v",  markersize=5)
+		axes[1].plot(np.array(item[5]), np.array(item[2])[item[5]]-12, "^",  markersize=5)
+		print(item[8])
+		axes[1].axvline(x = item[8], color = cellscolors[idx])
+		axes[1].text(item[8]/len(item[0])+0.025, 0.9, 'Osc end',  fontsize=10, horizontalalignment='left', verticalalignment='center', transform=axes[1].transAxes)
+
+		#print(item)
+		axes[1].plot(item[6], item[7], '--', label='smooth')
+
+
+	axes[1].axvline(x = tostop, color = 'black', label = '')
+	axes[1].legend(loc='upper right')
+	axes[1].set(xlabel='Time', ylabel='Intensity/number of pixels')
+
+	#intensities_list_quick.append([time_int, ch0_int, ch1_int, ch2_int,  peaksmax, -peaksmin, xnew, f_cubic(xnew)])
 
 #_______________________________________________
 def update_figure(img, 
@@ -307,6 +360,9 @@ def update_figure(img,
 #_______________________________________________
 def draw_figure(canvas, figure):
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
+    print('figure_canvas_agg ',figure_canvas_agg)
+    print('figure            ',figure)
+    print('canvas            ',canvas)
     figure_canvas_agg.draw()
     figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
     return figure_canvas_agg
@@ -412,13 +468,20 @@ def update_figure_quick_loop(img):
 	global stop
 	global tostop
 	i = tostop
+	zoomflag=values['-ZOOMBOX-']
+
+	if event == '-ZOOMBOX-':
+		fig7_agg.get_tk_widget().forget()
+		update_figure_quick(imageq[tostop], len(imageq), zoomflag)
+		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
+		update_celllistquick(window)
 
 	if event == '-TIMEFRAMESLIDERQUICK-':
 		stop=True
 		tostop=int(values['-TIMEFRAMESLIDERQUICK-'])-1
 		window['-TIMEFRAMESLIDERQUICK-'].update(tostop+1)
 		fig7_agg.get_tk_widget().forget()
-		update_figure_quick(imageq[tostop], len(imageq))
+		update_figure_quick(imageq[tostop], len(imageq), zoomflag)
 		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
 		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(tostop+1,len(imageq)))
 		update_celllistquick(window)
@@ -429,7 +492,7 @@ def update_figure_quick_loop(img):
 		if tostop==len(imageq):tostop=0
 		window['-TIMEFRAMESLIDERQUICK-'].update(tostop+1)
 		fig7_agg.get_tk_widget().forget()
-		update_figure_quick(imageq[tostop], len(imageq))
+		update_figure_quick(imageq[tostop], len(imageq), zoomflag)
 		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
 		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(tostop+1,len(imageq)))
 		update_celllistquick(window)
@@ -440,7 +503,7 @@ def update_figure_quick_loop(img):
 		if tostop==-1:tostop=len(imageq)-1
 		window['-TIMEFRAMESLIDERQUICK-'].update(tostop+1)
 		fig7_agg.get_tk_widget().forget()
-		update_figure_quick(imageq[tostop], len(imageq))
+		update_figure_quick(imageq[tostop], len(imageq), zoomflag)
 		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
 		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(tostop+1,len(imageq)))
 		update_celllistquick(window)
@@ -451,11 +514,14 @@ def update_figure_quick_loop(img):
 		tostop=i
 		window['-TIMEFRAMESLIDERQUICK-'].update(i+1)
 		fig7_agg.get_tk_widget().forget()
-		update_figure_quick(imageq[tostop], len(imageq))
+		update_figure_quick(imageq[tostop], len(imageq), zoomflag)
 		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
 		window.Refresh()
 		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(tostop+1,len(imageq)))
-		if int(values['-LATENCYQUICKLIST-'])/1000.>0.: time.sleep(int(values['-LATENCYQUICKLIST-'])/1000.)
+		latency=int(values['-LATENCYQUICKLIST-'])/1000.
+		if latency>0.: 
+			time.sleep(latency)
+
 		update_celllistquick(window)
 	
 	while i > -1 and not stop and event == '-PLAYBQUICK-':
@@ -464,19 +530,21 @@ def update_figure_quick_loop(img):
 		tostop=i
 		window['-TIMEFRAMESLIDERQUICK-'].update(i+1)
 		fig7_agg.get_tk_widget().forget()
-		update_figure_quick(imageq[tostop], len(imageq))
+		update_figure_quick(imageq[tostop], len(imageq), zoomflag)
 		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
 		window.Refresh()
 		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(tostop+1,len(imageq)))
-		if int(values['-LATENCYQUICKLIST-'])/1000.>0.: time.sleep(int(values['-LATENCYQUICKLIST-'])/1000.)
+		latency=int(values['-LATENCYQUICKLIST-'])/1000.
+		if latency>0.: 
+			time.sleep(latency)
 		update_celllistquick(window)
 
 	if event =='-POSITIONSLISTQUICK-' or event == '-CELLMETADATASUBMITQUICK-' or event =='-TIMEFRAMEMETADATASUBMITQUICK-':
 		fig7_agg.get_tk_widget().forget()
 		if event =='-POSITIONSLISTQUICK-' :
-			update_figure_quick(imageq[0], len(imageq))
+			update_figure_quick(imageq[0], len(imageq), zoomflag)
 		else:
-			update_figure_quick(imageq[tostop], len(imageq))
+			update_figure_quick(imageq[tostop], len(imageq), zoomflag)
 		fig7_agg = draw_figure(window['-CANVAS7-'].TKCanvas, fig7)
 		return
 	
@@ -578,7 +646,7 @@ control_col3 = sg.Column([
     [sg.Text("Position", size=(10, 1), font=AppFont), sg.Combo([],enable_events=True,key='-POSITIONSLISTQUICK-', size=(20, 1), font=AppFont)],
 	[sg.Slider(range=(0,0), orientation='h',change_submits=True, key='-TIMEFRAMESLIDERQUICK-', font=AppFont)],
 	[sg.Text("Image", size=(10, 1), font=AppFont), sg.Text("0/0", size=(10, 1), key='-TIMEFRAMECOUNTERQUICK-', font=AppFont)],
-	[sg.Submit('Play BWD',key='-PLAYBQUICK-', font=AppFont),sg.Submit('Pause',key='-STOPQUICK-', font=AppFont),sg.Submit('Play FWD',key='-PLAYFQUICK-', font=AppFont)],
+	[sg.Submit('Play BWD',key='-PLAYBQUICK-', font=AppFont),sg.Submit('Pause',key='-STOPQUICK-', font=AppFont),sg.Submit('Play FWD',key='-PLAYFQUICK-', font=AppFont), sg.Checkbox('Zoom', enable_events=True, key = '-ZOOMBOX-', default=False, font=AppFont)],
 	[sg.Submit('Prev',key='-PREVQUICK-', font=AppFont),sg.Submit('Next',key='-NEXTQUICK-', font=AppFont),sg.Text("Latency (ms): ", size=(12, 1), key='-LATENCYQUICK-', font=AppFont), sg.Combo([0,10,100,250,500],default_value=0,enable_events=True,key='-LATENCYQUICKLIST-', size=(5, 1), font=AppFont)],
 
 	[],
@@ -657,13 +725,13 @@ while True:
 		position_list.sort()
 		window['-POSITIONSLISTQUICK-'].update(values=position_list)
 
-		fig6_agg.get_tk_widget().forget()
-		plt.clf()
-		xrow=int(math.sqrt(project_data['numberofpos']))+1
-		for sp in range(1,project_data['numberofpos']+1):
-			fig6.add_subplot(xrow,xrow,sp).plot([],[])
-		update_intensity_summary(project_data['numberofpos'], os.path.join(metadatapath, timelaps))
-		fig6_agg = draw_figure(window['-CANVAS6-'].TKCanvas, fig6)
+		#fig6_agg.get_tk_widget().forget()
+		#plt.clf()
+		#xrow=int(math.sqrt(project_data['numberofpos']))+1
+		#for sp in range(1,project_data['numberofpos']+1):
+		#	fig6.add_subplot(xrow,xrow,sp).plot([],[])
+		#update_intensity_summary(project_data['numberofpos'], os.path.join(metadatapath, timelaps))
+		#fig6_agg = draw_figure(window['-CANVAS6-'].TKCanvas, fig6)
 
 
 	if event == '-POSITIONSLISTQUICK-':
@@ -697,11 +765,75 @@ while True:
 		window['-TIMEFRAMECOUNTERQUICK-'].update("{}/{}".format(1,nimageq))
 		window['-TIMEFRAMESLIDERQUICK-'].update(value=1, range=(1,nimageq))
 
+		intensities_list_quick=[]
+		metadatalist=glob.glob(os.path.join(theimagemetaq,'metadata_tf*.json'))
+		metadatalist.sort()
+		mask_list={}
+
+		for tf in metadatalist:
+			f = open(tf)
+			data = json.load(f)
+			for cell in data['cells']:
+				#Remove cells that are not status valid...
+				#if data['cells'][cell]['valid']==False:continue
+				found=False
+				for cell2 in mask_list:
+					if cell==cell2:found=True
+				if found:mask_list[cell].append(data['cells'][cell]['mask'])
+				else: mask_list[cell]=[data['cells'][cell]['mask']]
+		intensities={}
+		for cell in mask_list:
+			ch0_int=[]
+			ch1_int=[]
+			ch2_int=[]
+			ch_tf=[]
+			for mask in mask_list[cell]:
+				fm = open(mask)
+				datam = json.load(fm)
+				for ch in range(int(datam["nchannels"])):
+					if ch==0:ch0_int.append(datam["intensity"][ch]/datam["npixels"])
+					if ch==1:ch1_int.append(datam["intensity"][ch]/datam["npixels"])
+					if ch==2:ch2_int.append(datam["intensity"][ch]/datam["npixels"])
+				ch_tf.append(int(os.path.split(mask)[-1].split("_")[1].replace('tf','')))
+			
+			zipped_lists = zip(ch_tf, ch0_int)
+			sorted_pairs = sorted(zipped_lists)
+			tuples = zip(*sorted_pairs)
+			time_int, ch0_int= [ list(tuple) for tuple in  tuples]
+
+			zipped_lists = zip(ch_tf, ch1_int)
+			sorted_pairs = sorted(zipped_lists)
+			tuples = zip(*sorted_pairs)
+			time_int, ch1_int= [ list(tuple) for tuple in  tuples]
+
+			xnew = np.linspace(time_int[0], time_int[-1], nimageq*5, endpoint=True)  
+			print(np.array(time_int))
+			print(np.array(ch1_int))
+			if len(time_int)<5:continue
+			f_cubic  = interp1d(np.array(time_int), np.array(ch1_int) , kind='cubic')
+			position_data2=os.path.join(metadatapath, timelaps, position,'position_data.json')
+			if not os.path.isfile(position_data2): 
+				print('no data for position , exit ',position_data2)
+				sys.exit(3)
+			positionfile_data2 = open(position_data2)
+			positions_data = json.load(positionfile_data2)
+			peaksmax = positions_data[cell]['maxima']
+			peaksmin = positions_data[cell]['minima']
+			print('max ',peaksmax)
+			print('min ',peaksmin)
+			zipped_lists = zip(ch_tf, ch2_int)
+			sorted_pairs = sorted(zipped_lists)
+			tuples = zip(*sorted_pairs)
+			time_int, ch2_int= [ list(tuple) for tuple in  tuples]
+
+			intensities_list_quick.append([time_int, ch0_int, ch1_int, ch2_int,  peaksmax, peaksmin, xnew, f_cubic(xnew), positions_data[cell]['oscilations_end']])
+
 
 	if event == '-PLAYBQUICK-' or event == '-PLAYFQUICK-' or event == '-TIMEFRAMESLIDERQUICK-' or event == '-PREVQUICK-' or event == '-NEXTQUICK-' \
-		or ('imageq' in locals() and event == '-POSITIONSLISTQUICK-') or event == '-CELLMETADATASUBMITQUICK-' or event =='-TIMEFRAMEMETADATASUBMITQUICK-':
+		or ('imageq' in locals() and event == '-POSITIONSLISTQUICK-') or event == '-CELLMETADATASUBMITQUICK-' or event =='-TIMEFRAMEMETADATASUBMITQUICK-' or event == '-ZOOMBOX-':
 		stop = False
 		inquicktab=True
+		print('event  ',event)
 		if tostop==len(imageq):tostop=0
 
 		_thread.start_new_thread(update_figure_quick_loop,(imageq,))

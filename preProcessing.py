@@ -8,9 +8,9 @@ import apoc
 testclement=True
 
 #use windows or linux path here
-#path ="/Users/helsens/data/singleCell"
+path ="/Users/helsens/data/singleCell"
 
-path = r"E:\Laurel\WSC\NIS split multipoints"  
+#path = r"E:\Laurel\WSC\NIS split multipoints"  
 
 path_meta=os.path.join(path, "metadata")
 if not os.path.exists(path_meta):
@@ -64,6 +64,8 @@ for proj in project_list:
         #position_dir=os.path.join(path_meta, proj, pos.split('/')[-1].replace('.nd2','').replace('.tif',''))
         if not os.path.exists(position_dir):
             os.makedirs(position_dir)
+        elif testclement and os.path.exists(position_dir):  continue
+
         position_meta = os.path.join(position_dir, 'position.json')
         if not os.path.isfile(position_meta):
             with open(position_meta, "w") as outfile_pos:
@@ -97,6 +99,9 @@ for proj in project_list:
             timeframe_meta=glob.glob(os.path.join(position_dir+'mask_tf{}_thr{}delta{}_cell*.json'.format(img,2.,2)))
             if len(timeframe_meta)==0:
                 seg.simpleSeg(image[img], position_dir, img, thr=2., delta=2, npix=400)
+                #seg.simpleSeg(image[img], position_dir, img, thr=2., delta=1, npix=400)
+                #seg.simpleSeg(image[img], position_dir, img, thr=3., delta=1, npix=400)
+                
         print('apoc seg')
         seg.apocSeg(clf, image, position_dir, npix=400)
 
