@@ -20,7 +20,8 @@ def nd2reader(path):
     #https://github.com/cwood1967/napari-nikon-nd2/blob/main/napari_nikon_nd2/_reader.py
     stack = nd2.ND2Reader(path)
     sizes = stack.sizes
-    print (sizes)    
+    print (sizes)
+    print('--',len(stack))
     if 't' not in sizes: sizes['t'] = 1
     if 'z' not in sizes: sizes['z'] = 1
     if 'c' not in sizes: sizes['c'] = 1
@@ -28,6 +29,7 @@ def nd2reader(path):
 
     stack.bundle_axes = 'zcyx'
     stack.iter_axes = 't'
+    print(stack.metadata)
     n = len(stack)
 
     shape = (sizes['t'], sizes['z'], sizes['c'], sizes['y'], sizes['x'])
@@ -35,7 +37,11 @@ def nd2reader(path):
 
     for i in range(n):
         image[i] = stack.get_frame(i)
-
+        #print(stack.get_frame(i).metadata)
     image = np.squeeze(image)
     return image
 
+
+if __name__ == "__main__":
+    import sys
+    nd2reader(sys.argv[1])
