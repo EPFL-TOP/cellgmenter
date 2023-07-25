@@ -39,6 +39,7 @@ def nd2reader(path):
         image[i] = stack.get_frame(i)
         #print(stack.get_frame(i).metadata)
     image = np.squeeze(image)
+    print(image.shape)
     return image
 
 

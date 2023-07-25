@@ -26,8 +26,8 @@ print('project list ',project_list)
 clf = apoc.PixelClassifier(opencl_filename="pixel_classification.cl")
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--project", help="project", type=str)
-parser.add_argument("--position", help="project", type=str)
+parser.add_argument("--project", help="project name to run", type=str)
+parser.add_argument("--position", help="position to run", type=str)
 args = parser.parse_args()
 if args.project!=None: project_list=[args.project]
 

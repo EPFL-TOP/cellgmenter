@@ -171,7 +171,8 @@ def update_figure_quick(img, nimg, zoom=False):
 
 	for idx, item in enumerate(intensities_list_quick):
 		axes[1].plot(item[0], item[2], cellscolors[idx]+'.-', label="ch1_cell{}".format(idx))
-		axes[1].plot(item[0], item[3], cellscolors[idx]+'o-', label="ch2_cell{}".format(idx))
+		#axes[1].plot(item[0], item[3], cellscolors[idx]+'o-', label="ch2_cell{}".format(idx))
+		if len(item[3])>0:axes[1].plot(item[0], item[3], cellscolors[idx]+'o-', label="ch2_cell{}".format(idx))
 		axes[1].plot(np.array(item[4]), np.array(item[2])[item[4]]+12, "v",  markersize=5)
 		axes[1].plot(np.array(item[5]), np.array(item[2])[item[5]]-12, "^",  markersize=5)
 		print(item[8])
@@ -824,7 +825,8 @@ while True:
 			zipped_lists = zip(ch_tf, ch2_int)
 			sorted_pairs = sorted(zipped_lists)
 			tuples = zip(*sorted_pairs)
-			time_int, ch2_int= [ list(tuple) for tuple in  tuples]
+			#time_int, ch2_int= [ list(tuple) for tuple in  tuples]
+			if len(ch2_int)>0:time_int, ch2_int= [ list(tuple) for tuple in  tuples]
 
 			intensities_list_quick.append([time_int, ch0_int, ch1_int, ch2_int,  peaksmax, peaksmin, xnew, f_cubic(xnew), positions_data[cell]['oscilations_end']])
 

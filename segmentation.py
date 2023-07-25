@@ -71,11 +71,15 @@ def apocSeg(clf, input, outdir, npix=300):
                 celllabel='cell{}'.format(len(previous_labels)+extracount)
                 extracount+=1
             intensities=[]
+            intensities_list=[]
             for i in range(len(input[count])):
                 intensity=0
+                intensity_list=[]
                 for coord in cells[c].coords:
                     intensity+=input[count][i][coord[0]][coord[1]]
+                    intensity_list.append(input[count][i][coord[0]][coord[1]])
                 intensities.append(intensity)
+                intensities_list.append(intensity_list)
 
             mask0=np.zeros(image[0].shape, dtype=bool)
             for coord in cells[c].coords:
@@ -91,7 +95,9 @@ def apocSeg(clf, input, outdir, npix=300):
                 'label':celllabel,
                 'coords':cells[c].coords,
                 'xcoords':contcoords[:,0],
-               'ycoords':contcoords[:,1]
+                'ycoords':contcoords[:,1],
+                'intensity_list':intensities_list
+
 
             }
             json_object = json.dumps(dic, cls=NpEncoder)
@@ -181,11 +187,16 @@ def simpleSeg(img,  outdir, count, thr=2., delta=1, npix=400):
             celllabel='cell{}'.format(len(previous_labels)+extracount)
             extracount+=1
         intensities=[]
+        intensities_list=[]
+
         for i in range(len(img)):
             intensity=0
+            intensity_list=[]
             for coord in cells[c].coords:
                 intensity+=img[i][coord[0]][coord[1]]
+                intensity_list.append(input[count][i][coord[0]][coord[1]])
             intensities.append(intensity)
+            intensities_list.append(intensity_list)
 
         mask0=np.zeros(img[0].shape, dtype=bool)
         for coord in cells[c].coords:
@@ -201,8 +212,8 @@ def simpleSeg(img,  outdir, count, thr=2., delta=1, npix=400):
             'label':celllabel,
             'coords':cells[c].coords,
             'xcoords':contcoords[:,0],
-            'ycoords':contcoords[:,1]
-
+            'ycoords':contcoords[:,1],
+            'intensity_list':intensities_list
         }
         json_object = json.dumps(dic, cls=NpEncoder)
 
@@ -212,12 +223,13 @@ def simpleSeg(img,  outdir, count, thr=2., delta=1, npix=400):
             outfile.write(json_object)
 
 
+    #Take simple seg as default
     celldic={}
     celllist=glob.glob(os.path.join(outdir , 'mask_tf{}_thr{}delta{}_cell*.json'.format(count,2.,2)))
     celllist.sort()
     for cellid, cell in enumerate(celllist):
  
-        celldic['cell{}'.format(cellid)]={
+        celldic[os.path.split(cell)[-1].split('_')[-1].replace('.json','')]={
 			'mask':cell,
         	'valid':True, #Set to False if user find out this cell is bad
 		    'alive':True, #True/False
