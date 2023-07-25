@@ -4,6 +4,8 @@ import os
 import glob
 import json
 import apoc
+import argparse
+
 
 testclement=True
 
@@ -23,14 +25,21 @@ print('project list ',project_list)
 
 clf = apoc.PixelClassifier(opencl_filename="pixel_classification.cl")
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--project", help="project", type=str)
+parser.add_argument("--position", help="project", type=str)
+args = parser.parse_args()
+if args.project!=None: project_list=[args.project]
+
 
 for proj in project_list:
-    if testclement and ('060' not in proj):continue
+    #if testclement and ('060' not in proj and 'rd416' not in proj):continue
+    if testclement and ('rd416' not in proj):continue
     position_list=[]
     for p in glob.glob(os.path.join(path, proj, '*')):
         if 'metadata'not in p: position_list.append(p)
     position_list.sort()
-    print(position_list)
+    print('position list ' ,position_list)
     
     #check if for a given project the metadata exist
     project_dir=os.path.join(path_meta, proj)
@@ -58,6 +67,9 @@ for proj in project_list:
 
     #Check if all the positions have metadata
     for pos in position_list:
+        if args.position not in pos: 
+            print ('skip position ',pos)
+            continue
         print('positon = ', pos )
 
         position_dir=os.path.join(path_meta, proj, os.path.split(pos)[-1].replace('.nd2','').replace('.tif',''))
