@@ -58,7 +58,8 @@ def process_pos(pos):
 
         time_int, ch0_int = get_ordered_list(ch_tf, ch0_int)
         time_int, ch1_int = get_ordered_list(ch_tf, ch1_int)
-        time_int, ch2_int = get_ordered_list(ch_tf, ch2_int)
+        if len(ch2_int)>0:
+            time_int, ch2_int = get_ordered_list(ch_tf, ch2_int)
         time_int, center = get_ordered_list(ch_tf, center)
 
         peaksmax, _ = find_peaks(np.array(ch1_int),  prominence=40)
@@ -120,7 +121,8 @@ def process_pos(pos):
 
         peaksmin_list_clean=[]
         for min in peaksmin_list:
-            if min>peaksmax_list[-1]:continue
+            if len(peaksmax_list)>0:
+                if min>peaksmax_list[-1]:continue
             if min<oscilations_end:peaksmin_list_clean.append(min)
         if len(peaksmin_list_clean)==len(peaksmax_list):
             #rising when TS start with minimum
