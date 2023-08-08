@@ -67,8 +67,8 @@ for proj in project_list:
 
     #Check if all the positions have metadata
     for pos in position_list:
-        if args.position not in pos: 
-            print ('skip position ',pos)
+        if str(args.position) not in pos and args.position!=None: 
+            print ('skip position ',pos, '  ', )
             continue
         print('positon = ', pos )
 
