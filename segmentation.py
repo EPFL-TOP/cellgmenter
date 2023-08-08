@@ -34,8 +34,8 @@ def normalize_background(img, sigma, gpu):
     return intensity_normalized
 
 #_______________________________________________
-def apocSeg(clf, input, outdir, npix=300):
-    image=input[:,0,:,:]
+def apocSeg(clf, img, outdir, npix=300):
+    image=img[:,0,:,:]
     normalize = normalize_background(image, sigma, gpu)
     for count in range(normalize.shape[0]):
         prediction = np.asarray(clf.predict(normalize[count])-1,dtype=np.uint8)
@@ -72,12 +72,12 @@ def apocSeg(clf, input, outdir, npix=300):
                 extracount+=1
             intensities=[]
             intensities_list=[]
-            for i in range(len(input[count])):
+            for i in range(len(img[count])):
                 intensity=0
                 intensity_list=[]
                 for coord in cells[c].coords:
-                    intensity+=input[count][i][coord[0]][coord[1]]
-                    intensity_list.append(input[count][i][coord[0]][coord[1]])
+                    intensity+=img[count][i][coord[0]][coord[1]]
+                    intensity_list.append(img[count][i][coord[0]][coord[1]])
                 intensities.append(intensity)
                 intensities_list.append(intensity_list)
 
@@ -90,7 +90,7 @@ def apocSeg(clf, input, outdir, npix=300):
             dic={
                 'npixels':cells[c].area,
                 'center':cells[c].centroid,
-                'nchannels':len(input[count]),
+                'nchannels':len(img[count]),
                 'intensity':intensities,
                 'label':celllabel,
                 'coords':cells[c].coords,
@@ -194,7 +194,7 @@ def simpleSeg(img,  outdir, count, thr=2., delta=1, npix=400):
             intensity_list=[]
             for coord in cells[c].coords:
                 intensity+=img[i][coord[0]][coord[1]]
-                intensity_list.append(input[count][i][coord[0]][coord[1]])
+                intensity_list.append(img[i][coord[0]][coord[1]])
             intensities.append(intensity)
             intensities_list.append(intensity_list)
 
