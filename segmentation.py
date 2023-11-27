@@ -14,7 +14,45 @@ from pathlib import Path
 gpu = False
 sigma = 50
 minimum_size=250
-# Functions
+
+#_______________________________________________
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NpEncoder, self).default(obj)
+
+
+#_______________________________________________
+@nb.njit(fastmath = True)
+def fastiter(image, thr=2., delta=1):
+    img_seeds=np.zeros(image.shape, dtype=bool_)
+    for i in range(image.shape[0]):
+        bkg=[]
+        for ii in range(-5,5):
+            iii=ii+i
+            if iii<0 or iii>image.shape[0]-1:continue
+            for jj in range(0,25):
+                bkg.append(image[iii][jj])
+        bkg=np.array(bkg)
+        std=np.std(bkg)
+        for j in range(image.shape[1]):
+            sig=[]
+            for id in range(-delta, delta+1):
+                if id+i<0 or id+i>image.shape[0]-1:continue
+                for jd in range(-delta, delta+1):
+                    if jd+j<0 or jd+j>image.shape[1]-1:continue
+                    sig.append(image[i+id][j+jd])
+
+            if np.std(np.array(sig))>thr*std:
+                img_seeds[i][j]=True
+    return img_seeds
+
+#_______________________________________________
 def normalize_background(img, sigma, gpu):
     
     """
@@ -107,44 +145,8 @@ def apocSeg(clf, img, outdir, npix=300):
             with open(outname, "w") as outfile:
                 outfile.write(json_object)
 
-#_______________________________________________
-class NpEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        if isinstance(obj, np.floating):
-            return float(obj)
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return super(NpEncoder, self).default(obj)
 
 
-
-
-#_______________________________________________
-@nb.njit(fastmath = True)
-def fastiter(image, thr=2., delta=1):
-    img_seeds=np.zeros(image.shape, dtype=bool_)
-    for i in range(image.shape[0]):
-        bkg=[]
-        for ii in range(-5,5):
-            iii=ii+i
-            if iii<0 or iii>image.shape[0]-1:continue
-            for jj in range(0,25):
-                bkg.append(image[iii][jj])
-        bkg=np.array(bkg)
-        std=np.std(bkg)
-        for j in range(image.shape[1]):
-            sig=[]
-            for id in range(-delta, delta+1):
-                if id+i<0 or id+i>image.shape[0]-1:continue
-                for jd in range(-delta, delta+1):
-                    if jd+j<0 or jd+j>image.shape[1]-1:continue
-                    sig.append(image[i+id][j+jd])
-
-            if np.std(np.array(sig))>thr*std:
-                img_seeds[i][j]=True
-    return img_seeds
 
 
 
