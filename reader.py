@@ -108,7 +108,7 @@ def nd2reader(path):
 
     for i in range(n):
         image[i] = stack.get_frame(i)
-        print('-------------- i=',i,'    ',stack.get_frame(i).metadata)
+        #print('-------------- i=',i,'    ',stack.get_frame(i).metadata)
     image = np.squeeze(image)
     print(image.shape)
     stack.close()
