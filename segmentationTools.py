@@ -32,12 +32,13 @@ class customLocalThresholding_Segmentation:
         self.algorithm_type       = 'localthresholding'
         self.algorithm_version    = 'main'
 
-    def get_AlgoID(self):
+    def get_UID(self):
         algorithm_parameters="" 
         for par in self.algorithm_parameters:
             algorithm_parameters+=par+str(self.algorithm_parameters[par])
         
-        algoid = "algorithm_type={0}__algorithm_version={1}__algorithm_parameters={2}".format(self.algorithm_type, self.algorithm_version, algorithm_parameters) 
+        algoid = "algorithm_type={0}__algorithm_version={1}__algorithm_parameters={2}__segmentation_channel={3}"\
+            .format(self.algorithm_type, self.algorithm_version, algorithm_parameters, self.channels[self.segchannel]) 
         return algoid
     
 
