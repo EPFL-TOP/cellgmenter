@@ -33,6 +33,7 @@ def nd2reader_getSampleMetadata(path):
         else: metadata_dict['name_of_channels'] += metadata['channels'][i]
     
     print('stack.metadata = ',stack.metadata)
+    stack.close()
     return metadata_dict
 
 #_______________________________________________
@@ -47,6 +48,8 @@ def nd2reader_getFrameMetadata(path):
     metadata_dict['z_pos'] = metadata['z_coordinates']
     metadata_dict['height'] = metadata['height']
     metadata_dict['width'] = metadata['width']
+
+    stack.close()
 
     return metadata_dict
 
