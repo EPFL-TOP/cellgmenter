@@ -20,31 +20,39 @@ minimum_size=250
 version='0.0.1'
 
 
+#_______________________________________________
 class customLocalThresholding_Segmentation:
-    def __init__(self, segchannel, channels, threshold=2., delta=1, npix_min=400, npix_max=4000):
-        self.segchannel = segchannel
-        self.channels   = channels
+    def __init__(self, threshold=2., delta=1, npix_min=400, npix_max=4000):
         self.threshold  = threshold
         self.delta      = delta
         self.npix_min   = npix_min
         self.npix_max   = npix_max
-        self.algorithm_parameters = {'segchannel':self.channels[self.segchannel],'threshold':threshold, 'delta':delta, 'npix_min':npix_min, 'npix_max':npix_max}
+        self.algorithm_parameters = {'threshold':threshold, 'delta':delta, 'npix_min':npix_min, 'npix_max':npix_max}
         self.algorithm_type       = 'localthresholding'
         self.algorithm_version    = 'main'
-
-    def get_UID(self):
-        algorithm_parameters="" 
-        for par in self.algorithm_parameters:
-            algorithm_parameters+=par+str(self.algorithm_parameters[par])
-        
-        algoid = "algorithm_type={0}__algorithm_version={1}__algorithm_parameters={2}__segmentation_channel={3}"\
-            .format(self.algorithm_type, self.algorithm_version, algorithm_parameters, self.channels[self.segchannel]) 
-        return algoid
-    
+        self.channels = None
+        self.channel  = None
 
     #_______________________________________________
+    def get_param(self):
+        return self.algorithm_parameters
+    #_______________________________________________
+    def get_type(self):
+        return self.algorithm_type
+    #_______________________________________________
+    def get_version(self):
+        return self.algorithm_version
+    #_______________________________________________
+    def set_channels(self, channel, channels):
+        self.channel  = channel
+        self.channels = channels
+    
+    #_______________________________________________
     def segmentation(self, img):
-        image=img[self.segchannel]
+        if self.channel==None or self.channels==None:
+            print("Can not segment, channel or channels is NoneType")
+            return
+        image=img[self.channel]
         img_seeds=fastiter(image, self.delta, self.threshold)
 
         #dilated = binary_dilation(img_seeds, disk(2))
