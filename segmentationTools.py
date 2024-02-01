@@ -151,7 +151,7 @@ def build_contour_dict(contours, image, img, channels):
                 single_pixels_inside['z'].append(int(p[2]))
 
         cs=plt.contour(mask0, [0.5],linewidths=1.2,  colors='red')
-        print('======================== cs size= ',asizeof.asizeof(cs)
+        print('======================== cs size= ',asizeof.asizeof(cs))
         contcoords = cs.allsegs[0][0]
         z_flag=False
         if contcoords.shape[1]==3: z_flag=True
