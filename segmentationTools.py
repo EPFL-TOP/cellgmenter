@@ -8,6 +8,7 @@ import pyclesperanto_prototype as cle
 import matplotlib.pyplot as plt
 import matplotlib
 from pympler import asizeof
+import time
 
 matplotlib.use('agg')
 
@@ -51,29 +52,44 @@ class customLocalThresholding_Segmentation:
     
     #_______________________________________________
     def segmentation(self, img):
+        start=time.time()
         if self.channel==None or self.channels==None:
             print("Can not segment, channel or channels is NoneType")
             return
+        print('===========START time = ',time.time()-start)
         image=img[self.channel]
+        print('image time = ',time.time()-start)
         img_seeds=fastiter(image, self.delta, self.threshold)
+        print('img_seeds time = ',time.time()-start)
 
         #dilated = binary_dilation(img_seeds, disk(2))
         closed = binary_closing(img_seeds, disk(4))
+        print('closed time = ',time.time()-start)
+
         filled = binary_fill_holes(closed).astype(int)
+        print('filled time = ',time.time()-start)
         label_im = label(filled)
+        print('label_im time = ',time.time()-start)
 
         regions=regionprops(label_im)
+        print('regions time = ',time.time()-start)
+
         contours=[]
         for r in regions:
         
             if r.num_pixels>self.npix_min and r.num_pixels<self.npix_max:
                 contours.append(r)
 
+        print('contours time = ',time.time()-start)
+
         contour_list=build_contour_dict(contours, image, img, self.channels)
+        print('contour_list time = ',time.time()-start)
+
         for c in contour_list:
             c['algorithm_parameters'] = self.algorithm_parameters
             c['algorithm_type']       = self.algorithm_type
             c['algorithm_version']    = self.algorithm_version
+        print('===========END time = ',time.time()-start)
         return contour_list
 
 
