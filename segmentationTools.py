@@ -16,9 +16,6 @@ import glob, os, sys, math
 from pathlib import Path
 import apoc
 
-from memory_profiler import profile
-
-
 gpu = False
 sigma = 50
 minimum_size=250
@@ -27,7 +24,6 @@ version='0.0.1'
 
 #_______________________________________________
 class customLocalThresholding_Segmentation:
-    @profile
     def __init__(self, threshold=2., delta=1, npix_min=400, npix_max=4000):
         self.threshold  = threshold
         self.delta      = delta
@@ -40,25 +36,20 @@ class customLocalThresholding_Segmentation:
         self.channel  = None
 
     #_______________________________________________
-    @profile
     def get_param(self):
         return self.algorithm_parameters
     #_______________________________________________
-    @profile
     def get_type(self):
         return self.algorithm_type
     #_______________________________________________
-    @profile
     def get_version(self):
         return self.algorithm_version
     #_______________________________________________
-    @profile
     def set_channels(self, channel, channels):
         self.channel  = channel
         self.channels = channels
     
     #_______________________________________________
-    @profile
     def segmentation(self, img):
         if self.channel==None or self.channels==None:
             print("Can not segment, channel or channels is NoneType")
@@ -87,7 +78,6 @@ class customLocalThresholding_Segmentation:
 
 
 #_______________________________________________
-@profile
 @nb.njit(fastmath = True)
 def fastiter(image, delta, threshold):
     img_seeds=np.zeros(image.shape, dtype=bool_)
@@ -114,7 +104,6 @@ def fastiter(image, delta, threshold):
 
 
 #_______________________________________________
-@profile
 def build_contour_dict(contours, image, img, channels):
 
     out_contours=[]
@@ -151,7 +140,6 @@ def build_contour_dict(contours, image, img, channels):
                 single_pixels_inside['z'].append(int(p[2]))
 
         cs=plt.contour(mask0, [0.5],linewidths=1.2,  colors='red')
-        print('======================== cs size= ',asizeof.asizeof(cs))
         contcoords = cs.allsegs[0][0]
         z_flag=False
         if contcoords.shape[1]==3: z_flag=True
