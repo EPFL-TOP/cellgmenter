@@ -182,6 +182,7 @@ def build_contour_dict(contours, image, img, channels):
             'all_pixels_contour':all_pixels_contour,
         }
         out_contours.append(contour_dic)
+    del cs
     return out_contours
 
 
