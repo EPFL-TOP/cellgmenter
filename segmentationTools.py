@@ -121,6 +121,9 @@ def fastiter(image, delta, threshold):
 
 #_______________________________________________
 def build_contour_dict(contours, image, img, channels):
+    start=time.time()
+
+    print('===========START time = ',time.time()-start)
 
     out_contours=[]
     for c in range(len(contours)):
@@ -155,6 +158,9 @@ def build_contour_dict(contours, image, img, channels):
             if len(p)==3:
                 single_pixels_inside['z'].append(int(p[2]))
 
+
+        print('build contour time = ',time.time()-start)
+
         cs=plt.contour(mask0, [0.5],linewidths=1.2,  colors='red')
         contcoords = cs.allsegs[0][0]
         z_flag=False
@@ -169,6 +175,8 @@ def build_contour_dict(contours, image, img, channels):
                 if z_flag: inttmp=float(img[ch][int(p[0])][int(p[1])][int(p[2])])
                 single_pixels_contour['intensity'][channels[ch]].append(inttmp)
                 all_pixels_contour['sum_intensity'][channels[ch]]+=inttmp
+
+        print('contour plot contour time = ',time.time()-start)
 
         for ch in range(len(channels)):
             all_pixels_inside['mean_intensity'][channels[ch]]=np.mean(single_pixels_inside['intensity'][channels[ch]])
@@ -193,6 +201,7 @@ def build_contour_dict(contours, image, img, channels):
         plt.close()
         plt.cla()
         plt.clf()
+    print('=============END time = ',time.time()-start)
 
     return out_contours
 
