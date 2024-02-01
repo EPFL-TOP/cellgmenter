@@ -7,6 +7,8 @@ from numba.types import bool_
 import pyclesperanto_prototype as cle
 import matplotlib.pyplot as plt
 import matplotlib
+from pympler import asizeof
+
 matplotlib.use('agg')
 
 import json
@@ -149,6 +151,7 @@ def build_contour_dict(contours, image, img, channels):
                 single_pixels_inside['z'].append(int(p[2]))
 
         cs=plt.contour(mask0, [0.5],linewidths=1.2,  colors='red')
+        print('======================== cs size= ',asizeof.asizeof(cs)
         contcoords = cs.allsegs[0][0]
         z_flag=False
         if contcoords.shape[1]==3: z_flag=True
@@ -182,7 +185,11 @@ def build_contour_dict(contours, image, img, channels):
             'all_pixels_contour':all_pixels_contour,
         }
         out_contours.append(contour_dic)
-    del cs
+        plt.figure().clear()
+        plt.close()
+        plt.cla()
+        plt.clf()
+
     return out_contours
 
 
