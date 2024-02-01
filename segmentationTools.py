@@ -8,7 +8,6 @@ import pyclesperanto_prototype as cle
 import matplotlib.pyplot as plt
 import matplotlib
 from pympler import asizeof
-import time
 
 matplotlib.use('agg')
 
@@ -52,7 +51,6 @@ class customLocalThresholding_Segmentation:
     
     #_______________________________________________
     def segmentation(self, img):
-        start=time.time()
         if self.channel==None or self.channels==None:
             print("Can not segment, channel or channels is NoneType")
             return
@@ -77,7 +75,6 @@ class customLocalThresholding_Segmentation:
             c['algorithm_parameters'] = self.algorithm_parameters
             c['algorithm_type']       = self.algorithm_type
             c['algorithm_version']    = self.algorithm_version
-        print('===========segmentation END time = ',time.time()-start)
         return contour_list
 
 
@@ -109,9 +106,6 @@ def fastiter(image, delta, threshold):
 
 #_______________________________________________
 def build_contour_dict(contours, image, img, channels):
-    start=time.time()
-
-
     out_contours=[]
     for c in range(len(contours)):
         single_pixels_inside={'x':[], 'y':[], 'z':[], 'intensity':{}}
