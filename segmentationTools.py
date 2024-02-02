@@ -168,8 +168,8 @@ def build_contour_dict(contours, image, img, channels):
             center={'x':contours[c].centroid[0],'y':contours[c].centroid[1],'z':contours[c].centroid[2]}
 
 
-        all_pixels_inside['npixels']= contours[c].num_pixels
-        all_pixels_contour['npixels']= len(contcoords)
+        all_pixels_inside['npixels']  = int(contours[c].num_pixels)
+        all_pixels_contour['npixels'] = len(contcoords)
         
         contour_dic={
             'center':center,
