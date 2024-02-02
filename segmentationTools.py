@@ -167,6 +167,10 @@ def build_contour_dict(contours, image, img, channels):
         if len(contours[c].centroid)==3:
             center={'x':contours[c].centroid[0],'y':contours[c].centroid[1],'z':contours[c].centroid[2]}
 
+
+        all_pixels_inside['npixels']= contours[c].num_pixels
+        all_pixels_contour['npixels']= len(contcoords)
+        
         contour_dic={
             'center':center,
             'number_of_pixels':contours[c].num_pixels,
