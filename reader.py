@@ -1,10 +1,10 @@
 import nd2reader as nd2
 import numpy as np
-from skimage.io import imread
 #import nd2
 
 #_______________________________________________
 def tifreader(path):
+    from skimage.io import imread
     image = imread(path)
     image = image.transpose(0,3,1,2)
     return image
@@ -81,14 +81,14 @@ def nd2reader(path):
     #https://github.com/cwood1967/napari-nikon-nd2/blob/main/napari_nikon_nd2/_reader.py
     stack = nd2.reader.ND2Reader(path)
     sizes = stack.sizes
-    print ('sizes=',sizes)
-    print ('stack=',stack)
-    print('stack type=',type(stack))
-    print('events=',stack.events)
-    print('f rate---------------',stack.frame_rate)
-    print('f timesteps---------------',stack.timesteps/60000.)
-    print('len stack',len(stack))
-    print('stack.metadata = ',stack.metadata)
+    #print ('sizes=',sizes)
+    #print ('stack=',stack)
+    #print('stack type=',type(stack))
+    #print('events=',stack.events)
+    #print('f rate---------------',stack.frame_rate)
+    #print('f timesteps---------------',stack.timesteps/60000.)
+    #print('len stack',len(stack))
+    #print('stack.metadata = ',stack.metadata)
 
     #parser=nd2.parser.Parser(path)
     #print('parser=',parser)
@@ -99,7 +99,7 @@ def nd2reader(path):
     if 't' not in sizes: sizes['t'] = 1
     if 'z' not in sizes: sizes['z'] = 1
     if 'c' not in sizes: sizes['c'] = 1
-    print (sizes)    
+    #print (sizes)    
 
     stack.bundle_axes = 'zcyx'
     stack.iter_axes = 't'
@@ -108,12 +108,13 @@ def nd2reader(path):
 
     shape = (sizes['t'], sizes['z'], sizes['c'], sizes['y'], sizes['x'])
     image  = np.zeros(shape, dtype=np.float32)
+    #image  = np.zeros(shape, dtype=np.float32)
 
     for i in range(n):
         image[i] = stack.get_frame(i)
         #print('-------------- i=',i,'    ',stack.get_frame(i).metadata)
     image = np.squeeze(image)
-    print(image.shape)
+    #print(image.shape)
     stack.close()
     return image
 
