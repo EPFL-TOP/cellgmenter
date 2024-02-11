@@ -15,12 +15,51 @@ import json
 import glob, os, sys, math
 from pathlib import Path
 import apoc
+from scipy.ndimage import gaussian_filter
+from skimage import filters as skfilters
+from skimage import morphology
+from skimage.measure import label, regionprops, find_contours
 
 gpu = False
 sigma = 50
 minimum_size=250
 version='0.0.1'
 
+#_______________________________________________
+def norm(img, tonorm=1):
+    r = img*tonorm /img.mean()
+    return r
+
+#_______________________________________________
+def get_ROIs(images):
+    BF_images=images.transpose(1,0,2,3)
+    BF_images=BF_images[0]
+    for im in range(len(BF_images)):
+        BF_images[im]=norm(BF_images[im])
+    BF_images=BF_images.transpose(1,2,0)
+
+    BF_image_std = np.std(BF_images, axis=2)
+    edge_sobel = skfilters.sobel(BF_image_std)
+
+    val = skfilters.threshold_otsu( gaussian_filter(edge_sobel, 2))
+    otsu = edge_sobel>val
+    closed = binary_closing(otsu, morphology.disk(4))
+    filled = binary_fill_holes(closed).astype(int)
+
+    res = morphology.white_tophat(filled, morphology.disk(8)) 
+
+    filled = filled-res
+    filled = morphology.dilation(filled, morphology.disk(10))
+
+    label_im = label(filled)
+    regions=regionprops(label_im)
+    ROIs=[]
+    for r in regions:
+        
+        if r.num_pixels>100 and r.num_pixels<15000:
+            ROIs.append(r.bbox)
+
+    return ROIs
 
 #_______________________________________________
 class customLocalThresholding_Segmentation:
@@ -102,6 +141,41 @@ def fastiter(image, delta, threshold):
             if np.std(np.array(sig))>threshold*std:
                 img_seeds[i][j]=True
     return img_seeds
+
+
+#_______________________________________________
+@nb.njit(fastmath = True)
+def fastiter_mean(image, delta, threshold_std):
+    img_seeds=np.zeros(image.shape, dtype=bool_)
+    img_mean=np.zeros(image.shape)
+    img_std=np.zeros(image.shape)
+
+    for i in range(image.shape[0]):
+        bkg=[]
+        for ii in range(-5,5):
+            iii=ii+i
+            if iii<0 or iii>image.shape[0]-1:continue
+            for jj in range(0,25):
+                bkg.append(image[iii][jj])
+        bkg=np.array(bkg)
+        std=np.std(bkg)
+        mean=np.mean(bkg)
+        for j in range(image.shape[1]):
+            sig=[]
+            for id in range(-delta, delta+1):
+                if id+i<0 or id+i>image.shape[0]-1:continue
+                for jd in range(-delta, delta+1):
+                    if jd+j<0 or jd+j>image.shape[1]-1:continue
+                    sig.append(image[i+id][j+jd])
+
+            #if np.std(np.array(sig))>threshold_std*std and np.abs(np.mean(np.array(sig))-mean)/mean>1.2:
+            if i>200 and i<300 and j>200 and j<300 and np.abs(np.mean(np.array(sig))-mean)>1.5:
+                print(i,'  ',j,'  ',np.abs(np.mean(np.array(sig))-mean),'  ',np.std(np.array(sig)),'  ',std)
+            if np.abs(np.mean(np.array(sig))-mean)>1.5 and np.std(np.array(sig))>threshold_std*std:
+                img_seeds[i][j]=True
+            img_mean[i][j]=np.mean(np.array(sig))
+            img_std[i][j]=np.std(np.array(sig))
+    return img_seeds,img_mean,img_std
 
 
 #_______________________________________________
@@ -261,6 +335,11 @@ def customLocalThresholding_Segmentation_out(img,  outdir, thr=2., delta=1, npix
             cs=plt.contour(mask0, [0.5],linewidths=1.2,  colors='red')
             contcoords= cs.allsegs[0][0]
         
+            print('frame = ', im)
+            print('area  = ',cells[c].area)
+            print('num_pixels  = ',cells[c].num_pixels)
+            
+
             dic={
                 'npixels':cells[c].area,
                 'center':cells[c].centroid,
