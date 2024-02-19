@@ -31,7 +31,33 @@ def norm(img, tonorm=1):
     return r
 
 #_______________________________________________
-def get_ROIs(images):
+def get_ROIs_per_frame(image):
+
+    BF_image_filter_high = gaussian_filter(image,20)
+    totry =np.abs(image-BF_image_filter_high)
+
+    val = skfilters.threshold_otsu(totry)
+    otsu = totry>val*3.5
+
+    closed = binary_closing(otsu, disk(2))
+    filled = binary_fill_holes(closed).astype(int)
+
+    res = morphology.white_tophat(filled, morphology.disk(4)) 
+
+    filled = filled-res
+    filled = morphology.dilation(filled, morphology.disk(10))
+
+    label_im = label(filled)
+    regions=regionprops(label_im)
+    ROIs=[]
+    for r in regions:
+        if r.num_pixels>100 and r.num_pixels<15000:
+            ROIs.append(r.bbox)
+
+    return ROIs
+
+#_______________________________________________
+def get_ROIs_per_sample(images):
     BF_images=images.transpose(1,0,2,3)
     BF_images=BF_images[0]
     for im in range(len(BF_images)):
@@ -55,7 +81,6 @@ def get_ROIs(images):
     regions=regionprops(label_im)
     ROIs=[]
     for r in regions:
-        
         if r.num_pixels>100 and r.num_pixels<15000:
             ROIs.append(r.bbox)
 
