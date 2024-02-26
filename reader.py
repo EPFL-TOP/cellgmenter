@@ -42,12 +42,13 @@ def nd2reader_getFrameMetadata(path):
     metadata = stack.metadata
     timesteps = stack.timesteps.tolist()
     metadata_dict={}
-    metadata_dict['time'] = timesteps
-    metadata_dict['x_pos'] = metadata['x_coordinates']
-    metadata_dict['y_pos'] = metadata['y_coordinates']
-    metadata_dict['z_pos'] = metadata['z_coordinates']
-    metadata_dict['height'] = metadata['height']
-    metadata_dict['width'] = metadata['width']
+    metadata_dict['time']          = timesteps
+    metadata_dict['x_pos']         = metadata['x_coordinates']
+    metadata_dict['y_pos']         = metadata['y_coordinates']
+    metadata_dict['z_pos']         = metadata['z_coordinates']
+    metadata_dict['height']        = metadata['height']
+    metadata_dict['width']         = metadata['width']
+    metadata_dict['pixel_microns'] = metadata['pixel_microns']
 
     stack.close()
 
