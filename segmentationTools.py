@@ -31,13 +31,13 @@ def norm(img, tonorm=1):
     return r
 
 #_______________________________________________
-def get_ROIs_per_frame(image):
+def get_ROIs_per_frame(image, thr=3.5):
 
     BF_image_filter_high = gaussian_filter(image,20)
     totry =np.abs(image-BF_image_filter_high)
 
     val = skfilters.threshold_otsu(totry)
-    otsu = totry>val*3.5
+    otsu = totry>val*thr
 
     closed = binary_closing(otsu, disk(2))
     filled = binary_fill_holes(closed).astype(int)
@@ -52,6 +52,8 @@ def get_ROIs_per_frame(image):
     ROIs=[]
     for r in regions:
         if r.num_pixels>100 and r.num_pixels<15000:
+            #Bounding box (min_row, min_col, max_row, max_col). 
+            #Pixels belonging to the bounding box are in the half-open interval [min_row; max_row) and [min_col; max_col).
             ROIs.append(r.bbox)
 
     return ROIs
