@@ -45,7 +45,7 @@ def get_ROIs_per_frame(image, thr=3.5):
     res = morphology.white_tophat(filled, morphology.disk(4)) 
 
     filled = filled-res
-    filled = morphology.dilation(filled, morphology.disk(10))
+    filled = morphology.dilation(filled, morphology.disk(15))
 
     label_im = label(filled)
     regions=regionprops(label_im)
