@@ -206,8 +206,11 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
             #    img_seeds[i][j]=True
             #    print('sig')
 
-            if np.std(np.array(sig))>threshold*std:
+            if np.std(np.array(sig))>threshold*std and np.abs(np.mean(np.array(sig))-mean)>std:
                 img_seeds[i][j]=True
+
+
+            #if np.abs(np.mean(np.array(sig))-mean)>std and np.std(np.array(sig))>threshold_std*std:
 
             #sig=[]
             #for id in range(-delta, delta+1):
