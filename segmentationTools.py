@@ -158,7 +158,7 @@ def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
     img_seeds=fastiter_range(img, thr, min_row, min_col, max_row, max_col)
 
     #dilated = binary_dilation(img_seeds, disk(2))
-    closed   = binary_closing(img_seeds, disk(2))
+    closed   = binary_closing(img_seeds, disk(4))
     filled   = binary_fill_holes(closed).astype(int)
     label_im = label(filled)
     regions  = regionprops(label_im)
