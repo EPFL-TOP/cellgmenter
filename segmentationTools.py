@@ -193,7 +193,7 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
         mean=np.mean(bkg)
 
         for j in range(min_col, max_col+1):
-            print('i={}, j={}, int={}, mean={}, std={}'.format(i,j,image[i][j], mean, std))
+            print('i=',i,'  j=',j,'  int=',image[i][j],'  mean=',mean,'  std=',std)
             if image[i][j]>mean+threshold*std or image[i][j]<mean-threshold*std:
                 img_seeds[i][j]=True
                 print('sig')
