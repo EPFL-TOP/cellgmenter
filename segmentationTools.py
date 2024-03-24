@@ -90,7 +90,7 @@ def get_ROIs_per_sample(images):
 
 #_______________________________________________
 class customLocalThresholding_Segmentation:
-    def __init__(self, threshold=2., delta=1, npix_min=400, npix_max=4000):
+    def __init__(self, threshold=2., delta=1, npix_min=400, npix_max=4000, min_row=-999, min_col=-999, max_row=-999, max_col=-999):
         self.threshold  = threshold
         self.delta      = delta
         self.npix_min   = npix_min
@@ -100,6 +100,11 @@ class customLocalThresholding_Segmentation:
         self.algorithm_version    = 'main'
         self.channels = None
         self.channel  = None
+        self.min_row = min_row
+        self.min_col = min_col
+        self.max_row = max_row
+        self.max_col = max_col        
+
 
     #_______________________________________________
     def get_param(self):
@@ -121,13 +126,14 @@ class customLocalThresholding_Segmentation:
             print("Can not segment, channel or channels is NoneType")
             return
         image=img[self.channel]
-        img_seeds=fastiter(image, self.delta, self.threshold)
+        #img_seeds=fastiter(image, self.delta, self.threshold)
+        img_seeds=fastiter_range(image, self.delta, self.threshold, self.min_row, self.min_col, self.max_row, self.max_col)
 
         #dilated = binary_dilation(img_seeds, disk(2))
-        closed = binary_closing(img_seeds, disk(4))
-        filled = binary_fill_holes(closed).astype(int)
+        closed   = binary_closing(img_seeds, disk(4))
+        filled   = binary_fill_holes(closed).astype(int)
         label_im = label(filled)
-        regions=regionprops(label_im)
+        regions  = regionprops(label_im)
 
         contours=[]
         for r in regions:
@@ -142,6 +148,62 @@ class customLocalThresholding_Segmentation:
             c['algorithm_type']       = self.algorithm_type
             c['algorithm_version']    = self.algorithm_version
         return contour_list
+
+#_______________________________________________
+def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
+
+    img_seeds=fastiter_range(img, thr, min_row, min_col, max_row, max_col)
+
+    #dilated = binary_dilation(img_seeds, disk(2))
+    closed   = binary_closing(img_seeds, disk(4))
+    filled   = binary_fill_holes(closed).astype(int)
+    label_im = label(filled)
+    regions  = regionprops(label_im)
+
+    contour=None
+    max_pix=0
+    for r in regions:
+    
+        if r.area>max_pix:
+            contour=r
+            max_pix=r.area
+
+    return contour
+
+
+#_______________________________________________
+@nb.njit(fastmath = True)
+def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
+    img_seeds=np.zeros(image.shape, dtype=bool_)
+    for i in range(min_row, max_row+1):
+        bkg=[]
+        for ii in range(i-1,i+2):
+            iii=ii+i
+            if iii<0 or iii>image.shape[0]-1:continue
+            for jj in range(min_col-3,min_col):
+                bkg.append(image[iii][jj])
+            for jj in range(max_col+1,min_col+4):
+                bkg.append(image[iii][jj])
+
+        bkg=np.array(bkg)
+        std=np.std(bkg)
+        mean=np.mean(bkg)
+
+        for j in range(min_col, max_col+1):
+
+            if image[i][j]>mean+threshold*std or image[i][j]<mean-threshold*std:
+                img_seeds[i][j]=True
+
+            #sig=[]
+            #for id in range(-delta, delta+1):
+            #    if id+i<0 or id+i>image.shape[0]-1:continue
+            #    for jd in range(-delta, delta+1):
+            #        if jd+j<0 or jd+j>image.shape[1]-1:continue
+            #        sig.append(image[i+id][j+jd])
+
+            #if np.std(np.array(sig))>threshold*std:
+            #    img_seeds[i][j]=True
+    return img_seeds
 
 
 #_______________________________________________
