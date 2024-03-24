@@ -152,6 +152,9 @@ class customLocalThresholding_Segmentation:
 #_______________________________________________
 def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
 
+    print(img)
+    print('thr=',thr, '  min_row=',min_row, '  max_row=',max_row, '  min_col=',min_col, '  max_col=',max_col )
+    
     img_seeds=fastiter_range(img, thr, min_row, min_col, max_row, max_col)
 
     #dilated = binary_dilation(img_seeds, disk(2))
