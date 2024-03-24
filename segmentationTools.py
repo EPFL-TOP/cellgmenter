@@ -156,7 +156,7 @@ def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
     print('thr=',thr, '  min_row=',min_row, '  max_row=',max_row, '  min_col=',min_col, '  max_col=',max_col )
     
     BF_image_filter_high = gaussian_filter(img,20)
-    totry =np.abs(img-BF_image_filter_high)
+    totry =img-BF_image_filter_high
 
     img_seeds=fastiter_range(totry, thr, min_row, min_col, max_row, max_col)
 
