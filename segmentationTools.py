@@ -179,25 +179,20 @@ def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
 def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
     img_seeds=np.zeros(image.shape, dtype=bool_)
     for i in range(min_row, max_row+1):
-        print('i=',i)
         bkg=[]
         for ii in range(i-1,i+2):
             if ii<0 or ii>image.shape[0]-1:continue
-            print('  ii=',ii)
             for jj in range(min_col-3,min_col):
                 bkg.append(image[ii][jj])
-                print('  jj=',jj)
 
             for jj in range(max_col+1,max_col+4):
                 bkg.append(image[ii][jj])
-                print('  jj=',jj)
 
         bkg=np.array(bkg)
         std=np.std(bkg)
         mean=np.mean(bkg)
 
         for j in range(min_col, max_col+1):
-            print('    j=',j)
 
             if image[i][j]>mean+threshold*std or image[i][j]<mean-threshold*std:
                 img_seeds[i][j]=True
