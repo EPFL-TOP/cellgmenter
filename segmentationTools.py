@@ -155,10 +155,7 @@ def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
     print(img)
     print('thr=',thr, '  min_row=',min_row, '  max_row=',max_row, '  min_col=',min_col, '  max_col=',max_col )
     
-    BF_image_filter_high = gaussian_filter(img,20)
-    totry = gaussian_filter(img,1)
-
-    img_seeds=fastiter_range(totry, thr, min_row, min_col, max_row, max_col)
+    img_seeds=fastiter_range(img, thr, min_row, min_col, max_row, max_col)
 
     #dilated = binary_dilation(img_seeds, disk(2))
     closed   = binary_closing(img_seeds, disk(4))
