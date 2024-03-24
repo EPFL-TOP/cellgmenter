@@ -188,7 +188,7 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
                 bkg.append(image[ii][jj])
                 print('  jj=',jj)
 
-            for jj in range(max_col+1,min_col+4):
+            for jj in range(max_col+1,max_col+4):
                 bkg.append(image[ii][jj])
                 print('  jj=',jj)
 
