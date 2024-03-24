@@ -177,6 +177,7 @@ def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
 #_______________________________________________
 @nb.njit(fastmath = True)
 def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
+    delta=1
     img_seeds=np.zeros(image.shape, dtype=bool_)
     for i in range(min_row, max_row+1):
         bkg=[]
@@ -193,10 +194,20 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
         mean=np.mean(bkg)
 
         for j in range(min_col, max_col+1):
-            print('i=',i,'  j=',j,'  int=',image[i][j],'  mean=',mean,'  std=',std)
-            if image[i][j]>mean+threshold*std or image[i][j]<mean-threshold*std:
+            sig=[]
+            for id in range(-delta, delta+1):
+                if id+i<0 or id+i>image.shape[0]-1:continue
+                for jd in range(-delta, delta+1):
+                    if jd+j<0 or jd+j>image.shape[1]-1:continue
+                    sig.append(image[i+id][j+jd])
+
+            #print('i=',i,'  j=',j,'  int=',image[i][j],'  mean=',mean,'  std=',std)
+            #if image[i][j]>mean+threshold*std or image[i][j]<mean-threshold*std:
+            #    img_seeds[i][j]=True
+            #    print('sig')
+
+            if np.std(np.array(sig))>threshold*std:
                 img_seeds[i][j]=True
-                print('sig')
 
             #sig=[]
             #for id in range(-delta, delta+1):
