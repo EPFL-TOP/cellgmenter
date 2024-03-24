@@ -206,7 +206,7 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
             #    img_seeds[i][j]=True
             #    print('sig')
 
-            if np.std(np.array(sig))>threshold*std and np.abs(np.mean(np.array(sig))-mean)>std:
+            if np.std(np.array(sig))>threshold*std or np.abs(np.mean(np.array(sig))-mean)>std:
                 img_seeds[i][j]=True
 
 
