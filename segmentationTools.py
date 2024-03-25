@@ -149,13 +149,15 @@ class customLocalThresholding_Segmentation:
             c['algorithm_version']    = self.algorithm_version
         return contour_list
 
+
+
 #_______________________________________________
 def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
 
     print(img)
     print('thr=',thr, '  min_row=',min_row, '  max_row=',max_row, '  min_col=',min_col, '  max_col=',max_col )
     
-    img_seeds,bkg_mean_list, bkg_std_list, sig_mean_list_sel, sig_std_list_sel, sig_mean_list_notsel, sig_std_list_notsel=fastiter_range(img, thr, min_row, min_col, max_row, max_col)
+    img_seeds,bkg_mean_list, bkg_std_list, sig_mean_list_sel, sig_std_list_sel, sig_mean_list_notsel, sig_std_list_notsel=fastiter_range_test(img, thr, min_row, min_col, max_row, max_col)
 
     #dilated = binary_dilation(img_seeds, disk(2))
     closed   = binary_closing(img_seeds, disk(4))
@@ -176,8 +178,8 @@ def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
 
 #_______________________________________________
 @nb.njit(fastmath = True)
-def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
-    delta=2
+def fastiter_range_test(image, threshold, min_row, min_col, max_row, max_col):
+    delta=1
     img_seeds=np.zeros(image.shape, dtype=bool_)
     bkg_mean_list=[]
     bkg_std_list=[]
@@ -233,6 +235,80 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
 
 
     return img_seeds, bkg_mean_list, bkg_std_list, sig_mean_list_sel, sig_std_list_sel, sig_mean_list_notsel, sig_std_list_notsel
+
+
+#_______________________________________________
+def segmentation(img, thr, min_row, min_col, max_row, max_col):
+    
+    img_seeds=fastiter_range(img, thr, min_row, min_col, max_row, max_col)
+
+    #dilated = binary_dilation(img_seeds, disk(2))
+    closed   = binary_closing(img_seeds, disk(4))
+    filled   = binary_fill_holes(closed).astype(int)
+    label_im = label(filled)
+    regions  = regionprops(label_im)
+
+    contour=None
+    max_pix=0
+    for r in regions:
+    
+        if r.area>max_pix:
+            contour=r
+            max_pix=r.area
+
+    return contour
+
+
+#_______________________________________________
+@nb.njit(fastmath = True)
+def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
+    delta=1
+    img_seeds=np.zeros(image.shape, dtype=bool_)
+
+    for i in range(min_row, max_row+1):
+        bkg=[]
+        for ii in range(i-1,i+2):
+            if ii<0 or ii>image.shape[0]-1:continue
+            for jj in range(min_col-3,min_col):
+                bkg.append(image[ii][jj])
+
+            for jj in range(max_col+1,max_col+4):
+                bkg.append(image[ii][jj])
+
+        bkg=np.array(bkg)
+        std=np.std(bkg)
+        mean=np.mean(bkg)
+        for j in range(min_col, max_col+1):
+            sig=[]
+            for id in range(-delta, delta+1):
+                if id+i<0 or id+i>image.shape[0]-1:continue
+                for jd in range(-delta, delta+1):
+                    if jd+j<0 or jd+j>image.shape[1]-1:continue
+                    sig.append(image[i+id][j+jd])
+
+
+            #Condition
+            if np.std(np.array(sig))>threshold*std or np.abs(np.mean(np.array(sig))-mean)>0.1*mean or np.std(np.array(sig))<std*0.5:
+                img_seeds[i][j]=True
+
+    for i in range(min_row, max_row+1):
+        for j in range(min_col, max_col+1):
+            ntrue=0
+            nfalse=0
+            for ii in range(i-1, i+2):
+                for jj in range(j-1, j+2):
+                    if ii==i and jj==j:continue
+                    if img_seeds[ii][jj]==True:ntrue+=1
+                    else: nfalse+=1
+            if nfalse>5:img_seeds[i][j]=False
+            if ntrue>5:img_seeds[i][j]=True
+
+    return img_seeds
+
+
+
+
+
 
 
 #_______________________________________________
