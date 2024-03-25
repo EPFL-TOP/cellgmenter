@@ -221,6 +221,20 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
 
             #if np.std(np.array(sig))>threshold*std:
             #    img_seeds[i][j]=True
+    for i in range(min_row, max_row+1):
+        for j in range(min_col, max_col+1):
+            ntrue=0
+            nfalse=0
+            for ii in range(i-1, i+2):
+                for jj in range(j-1, j+2):
+                    if ii==i and jj==j:continue
+                    if img_seeds[i][j]==True:ntrue+=1
+                    else: nfalse+=1
+            if nfalse>4:img_seeds[i][j]==False
+            if ntrue>4:img_seeds[i][j]==True
+            
+
+
     return img_seeds
 
 
