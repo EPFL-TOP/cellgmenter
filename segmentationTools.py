@@ -177,7 +177,7 @@ def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
 #_______________________________________________
 @nb.njit(fastmath = True)
 def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
-    delta=1
+    delta=4
     img_seeds=np.zeros(image.shape, dtype=bool_)
     bkg_mean_list=[]
     bkg_std_list=[]
@@ -198,7 +198,7 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
         bkg=np.array(bkg)
         std=np.std(bkg)
         mean=np.mean(bkg)
-        bkg_mean_list.append(0.3*mean)
+        bkg_mean_list.append(0.1*mean)
         bkg_std_list.append(threshold*std)
         for j in range(min_col, max_col+1):
             sig=[]
@@ -210,7 +210,7 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
 
 
             #Condition
-            if np.std(np.array(sig))>threshold*std or np.abs(np.mean(np.array(sig))-mean)>0.15*mean:# or np.std(np.array(sig))<std*0.8:
+            if np.std(np.array(sig))>threshold*std or np.abs(np.mean(np.array(sig))-mean)>0.1*mean:# or np.std(np.array(sig))<std*0.8:
                 img_seeds[i][j]=True
                 sig_mean_list_sel.append(np.abs(np.mean(np.array(sig))-mean))
                 sig_std_list_sel.append(np.std(np.array(sig)))
