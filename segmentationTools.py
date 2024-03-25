@@ -179,6 +179,10 @@ def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
 def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
     delta=1
     img_seeds=np.zeros(image.shape, dtype=bool_)
+    bkg_mean_list=[]
+    bkg_std_list=[]
+    sig_mean_list=[]
+    sig_std_list=[]
     for i in range(min_row, max_row+1):
         bkg=[]
         for ii in range(i-1,i+2):
@@ -192,7 +196,8 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
         bkg=np.array(bkg)
         std=np.std(bkg)
         mean=np.mean(bkg)
-
+        bkg_mean_list.append(mean)
+        bkg_std_list.append(std)
         for j in range(min_col, max_col+1):
             sig=[]
             for id in range(-delta, delta+1):
@@ -201,26 +206,13 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
                     if jd+j<0 or jd+j>image.shape[1]-1:continue
                     sig.append(image[i+id][j+jd])
 
-            #print('i=',i,'  j=',j,'  int=',image[i][j],'  mean=',mean,'  std=',std)
-            #if image[i][j]>mean+threshold*std or image[i][j]<mean-threshold*std:
-            #    img_seeds[i][j]=True
-            #    print('sig')
-
+            sig_mean_list.append(np.mean(np.array(sig)))
+            sig_std_list.append(np.std(np.array(sig)))
+            #Condition
             if np.std(np.array(sig))>threshold*std or np.abs(np.mean(np.array(sig))-mean)>threshold*std:
                 img_seeds[i][j]=True
 
 
-            #if np.abs(np.mean(np.array(sig))-mean)>std and np.std(np.array(sig))>threshold_std*std:
-
-            #sig=[]
-            #for id in range(-delta, delta+1):
-            #    if id+i<0 or id+i>image.shape[0]-1:continue
-            #    for jd in range(-delta, delta+1):
-            #        if jd+j<0 or jd+j>image.shape[1]-1:continue
-            #        sig.append(image[i+id][j+jd])
-
-            #if np.std(np.array(sig))>threshold*std:
-            #    img_seeds[i][j]=True
     for i in range(min_row, max_row+1):
         for j in range(min_col, max_col+1):
             ntrue=0
@@ -231,12 +223,12 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
                     #print('i=',i,' j=',j,' ii=',ii,' jj=',jj)
                     if img_seeds[ii][jj]==True:ntrue+=1
                     else: nfalse+=1
-            if nfalse>4:img_seeds[i][j]=False
-            if ntrue>4:img_seeds[i][j]=True
+            if nfalse>5:img_seeds[i][j]=False
+            if ntrue>5:img_seeds[i][j]=True
             #print('nfalse=',nfalse, ' ntrue=',ntrue)
 
 
-    return img_seeds
+    return img_seeds, bkg_mean_list, bkg_std_list, sig_mean_list, sig_std_list
 
 
 #_______________________________________________
