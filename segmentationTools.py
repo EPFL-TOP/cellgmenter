@@ -228,11 +228,12 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
             for ii in range(i-1, i+2):
                 for jj in range(j-1, j+2):
                     if ii==i and jj==j:continue
+                    print('i=',i,' j=',j,' ii=',ii,' jj=',jj)
                     if img_seeds[ii][jj]==True:ntrue+=1
                     else: nfalse+=1
-            #if nfalse>4:img_seeds[i][j]=False
-            #if ntrue>4:img_seeds[i][j]=True
-            
+            if nfalse>4:img_seeds[i][j]=False
+            if ntrue>4:img_seeds[i][j]=True
+            print('nfalse=',nfalse, ' ntrue=',ntrue)
 
 
     return img_seeds
