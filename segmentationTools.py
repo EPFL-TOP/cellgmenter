@@ -155,7 +155,7 @@ def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
     print(img)
     print('thr=',thr, '  min_row=',min_row, '  max_row=',max_row, '  min_col=',min_col, '  max_col=',max_col )
     
-    img_seeds,bkg_mean_list, bkg_std_list, sig_mean_list, sig_std_list=fastiter_range(img, thr, min_row, min_col, max_row, max_col)
+    img_seeds,bkg_mean_list, bkg_std_list, sig_mean_list_sel, sig_std_list_sel, sig_mean_list_notsel, sig_std_list_notsel=fastiter_range(img, thr, min_row, min_col, max_row, max_col)
 
     #dilated = binary_dilation(img_seeds, disk(2))
     closed   = binary_closing(img_seeds, disk(4))
@@ -171,7 +171,7 @@ def segmentation_test(img, thr, min_row, min_col, max_row, max_col):
             contour=r
             max_pix=r.area
 
-    return contour, bkg_mean_list, bkg_std_list, sig_mean_list, sig_std_list
+    return contour, bkg_mean_list, bkg_std_list, sig_mean_list_sel, sig_std_list_sel, sig_mean_list_notsel, sig_std_list_notsel
 
 
 #_______________________________________________
@@ -181,8 +181,10 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
     img_seeds=np.zeros(image.shape, dtype=bool_)
     bkg_mean_list=[]
     bkg_std_list=[]
-    sig_mean_list=[]
-    sig_std_list=[]
+    sig_mean_list_sel=[]
+    sig_std_list_sel=[]
+    sig_mean_list_notsel=[]
+    sig_std_list_notsel=[]
     for i in range(min_row, max_row+1):
         bkg=[]
         for ii in range(i-1,i+2):
@@ -206,13 +208,15 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
                     if jd+j<0 or jd+j>image.shape[1]-1:continue
                     sig.append(image[i+id][j+jd])
 
-            sig_mean_list.append(np.mean(np.array(sig)))
-            sig_std_list.append(np.std(np.array(sig)))
+
             #Condition
             if np.std(np.array(sig))>threshold*std or np.abs(np.mean(np.array(sig))-mean)>threshold*std:
                 img_seeds[i][j]=True
-
-
+                sig_mean_list_sel.append(np.mean(np.array(sig)))
+                sig_std_list_sel.append(np.std(np.array(sig)))
+            else:
+                sig_mean_list_notsel.append(np.mean(np.array(sig)))
+                sig_std_list_notsel.append(np.std(np.array(sig)))
     for i in range(min_row, max_row+1):
         for j in range(min_col, max_col+1):
             ntrue=0
@@ -228,7 +232,7 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
             #print('nfalse=',nfalse, ' ntrue=',ntrue)
 
 
-    return img_seeds, bkg_mean_list, bkg_std_list, sig_mean_list, sig_std_list
+    return img_seeds, bkg_mean_list, bkg_std_list, sig_mean_list_sel, sig_std_list_sel, sig_mean_list_notsel, sig_std_list_notsel
 
 
 #_______________________________________________
