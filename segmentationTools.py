@@ -198,8 +198,8 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
         bkg=np.array(bkg)
         std=np.std(bkg)
         mean=np.mean(bkg)
-        bkg_mean_list.append(mean)
-        bkg_std_list.append(std)
+        bkg_mean_list.append(threshold*mean)
+        bkg_std_list.append(threshold*std)
         for j in range(min_col, max_col+1):
             sig=[]
             for id in range(-delta, delta+1):
@@ -210,7 +210,7 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
 
 
             #Condition
-            if np.std(np.array(sig))>threshold*std or np.abs(np.mean(np.array(sig))-mean)>threshold*std or np.std(np.array(sig))<std*0.8:
+            if np.std(np.array(sig))>threshold*std or np.abs(np.mean(np.array(sig))-mean)>threshold*mean:# or np.std(np.array(sig))<std*0.8:
                 img_seeds[i][j]=True
                 sig_mean_list_sel.append(np.abs(np.mean(np.array(sig))-mean))
                 sig_std_list_sel.append(np.std(np.array(sig)))
