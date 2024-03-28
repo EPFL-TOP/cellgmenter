@@ -100,9 +100,9 @@ def get_ROIs_per_frame(image, thr=3.5):
 #_______________________________________________
 @nb.njit(fastmath = True)
 def validate_roi(image, min_row, min_col, max_row, max_col):
-    toret=[]
-    for i in range(min_row, max_row+1):
-        print(i)
+    toret=[min_row, min_col, max_row, max_col]
+    #for i in range(min_row, max_row+1):
+    #    print(i)
     return toret
 
 
