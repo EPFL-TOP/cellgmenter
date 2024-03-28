@@ -116,6 +116,14 @@ def validate_roi(image, min_row, min_col, max_row, max_col):
         left_ext = image[toret[0]:toret[2], toret[1]-npix:toret[1]]
         right_int = image[toret[0]:toret[2], toret[3]-npix:toret[3]]
         right_ext = image[toret[0]:toret[2], toret[3]:toret[3]+npix]
+
+        print('min_row, min_col, max_row, max_col ',min_row, min_col, max_row, max_col)
+        print('max_row-min_row, max_col-min_col=',max_row-min_row, max_col-min_col)
+        print('top_int='.top_int.shape, '  top_ext='.top_ext.shape)
+        print('bottom_int='.bottom_int.shape, '  bottom_ext='.bottom_ext.shape)
+        print('right_int='.right_int.shape, '  right_ext='.right_ext.shape)
+        print('left_int='.left_int.shape, '  left_ext='.left_ext.shape)
+
         print('step=',i)
         print('imgmean=',imgmean,  '  imgstd=',imgstd, '  imgmean+imgstd*thr=',imgmean+imgstd*thr,'  imgmean-imgstd*thr=',imgmean-imgstd*thr, '  imgstd*thr=',imgstd*thr)
         print('np.mean(top_int)=   ',np.mean(top_int), '  np.std(top_int)=',np.std(top_int), '  np.std(top_ext)*thr=',np.std(top_ext)*thr)
