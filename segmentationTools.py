@@ -116,15 +116,25 @@ def validate_roi(image, min_row, min_col, max_row, max_col):
         left_ext = image[toret[0]:toret[2], toret[1]-npix:toret[1]]
         right_int = image[toret[0]:toret[2], toret[3]-npix:toret[3]]
         right_ext = image[toret[0]:toret[2], toret[3]:toret[3]+npix]
+        print('step=',i)
+        print('imgmean=',imgmean,  '  imgstd=',imgstd, '  imgmean+imgstd*thr=',imgmean+imgstd*thr,'  imgmean-imgstd*thr=',imgmean-imgstd*thr, '  imgstd*thr=',imgstd*thr)
+        print('np.mean(top_int)=   ',np.mean(top_int), '  np.std(top_int)=',np.std(top_int), '  np.std(top_ext)*thr=',np.std(top_ext)*thr)
+        print('np.mean(bottom_int)=',np.mean(bottom_int), '  np.std(bottom_int)=',np.std(bottom_int), '  np.std(bottom_ext)*thr=',np.std(bottom_ext)*thr)
+        print('np.mean(left_int)=  ',np.mean(left_int), '  np.std(left_int)=',np.std(left_int), '  np.std(left_ext)*thr=',np.std(left_ext)*thr)
+        print('np.mean(right_int)= ',np.mean(right_int), '  np.std(right_int)=',np.std(right_int), '  np.std(right_ext)*thr=',np.std(right_ext)*thr)
 
         if np.mean(top_int)>imgmean+imgstd*thr or np.mean(top_int)<imgmean-imgstd*thr or np.std(top_int)>imgstd*thr or np.std(top_int)>np.std(top_ext)*thr:
             toret[0]=toret[0]-npix
+            print('top cond')
         if np.mean(bottom_int)>imgmean+imgstd*thr or np.mean(bottom_int)<imgmean-imgstd*thr or np.std(bottom_int)>imgstd*thr or np.std(bottom_int)>np.std(bottom_ext)*thr:
             toret[2]=toret[2]+npix
+            print('bottom cond')
         if np.mean(left_int)>imgmean+imgstd*thr or np.mean(left_int)<imgmean-imgstd*thr  or np.std(left_int)>imgstd*thr or np.std(left_int)>np.std(left_ext)*thr:
             toret[1]=toret[1]-npix
+            print('left cond')
         if np.mean(right_int)>imgmean+imgstd*thr or np.mean(right_int)<imgmean-imgstd*thr  or np.std(right_int)>imgstd*thr or np.std(right_int)>np.std(right_ext)*thr:
             toret[3]=toret[3]+npix
+            print('right cond')
 
     return toret
 
