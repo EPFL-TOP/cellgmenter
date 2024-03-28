@@ -20,6 +20,10 @@ from skimage import filters as skfilters
 from skimage import morphology
 from skimage.measure import label, regionprops, find_contours
 
+from skimage.filters import threshold_triangle, gaussian
+from skimage.morphology import binary_opening, disk, binary_closing, white_tophat
+
+
 gpu = False
 sigma = 50
 minimum_size=250
@@ -29,6 +33,40 @@ version='0.0.1'
 def norm(img, tonorm=1):
     r = img*tonorm /img.mean()
     return r
+
+
+
+
+#_______________________________________________
+def triangle_opening(frame):
+    """frame -> ffc-8bit -> White tophat -> Triangle thresholding -> Binary opening -> Binary closing.
+    """
+    ffc = gaussian(frame, sigma=30)
+    ffc = frame/ffc
+    max_value = np.max(ffc)
+    min_value = np.min(ffc)
+    ffc = (ffc - min_value)/(max_value-min_value)*255
+    ffc = ffc.astype(np.uint8)
+    footprint = disk(radius=11)
+    top_hated = white_tophat(ffc, footprint=footprint)
+    footprint = disk(radius=3)
+    threshold  = threshold_triangle(top_hated)
+    thresholded = np.zeros_like(frame)
+    thresholded[top_hated>threshold] = 1
+    opening = binary_opening(thresholded, footprint=footprint)
+    closing = binary_closing(opening, footprint)
+
+    label_im = label(closing)
+    regions=regionprops(label_im)
+    ROIs=[]
+    for r in regions:
+        if r.num_pixels>100 and r.num_pixels<15000:
+            #Bounding box (min_row, min_col, max_row, max_col). 
+            #Pixels belonging to the bounding box are in the half-open interval [min_row; max_row) and [min_col; max_col).
+            ROIs.append(r.bbox)
+
+    return ROIs
+
 
 #_______________________________________________
 def get_ROIs_per_frame(image, thr=3.5):
@@ -57,6 +95,16 @@ def get_ROIs_per_frame(image, thr=3.5):
             ROIs.append(r.bbox)
 
     return ROIs
+
+
+#_______________________________________________
+@nb.njit(fastmath = True)
+def validate_roi(image, min_row, min_col, max_row, max_col):
+    toret=[]
+    for i in range(min_row, max_row+1):
+        print(i)
+    return toret
+
 
 #_______________________________________________
 def get_ROIs_per_sample(images):
