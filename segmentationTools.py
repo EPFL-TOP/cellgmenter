@@ -101,8 +101,31 @@ def get_ROIs_per_frame(image, thr=3.5):
 @nb.njit(fastmath = True)
 def validate_roi(image, min_row, min_col, max_row, max_col):
     toret=[min_row, min_col, max_row, max_col]
-    #for i in range(min_row, max_row+1):
-    #    print(i)
+    npix=5
+    steps=10
+    thr=1.5
+    imgmean = np.mean(image)
+    imgstd  = np.std(image)
+    for i in range(steps):
+        top_int = image[toret[0]:toret[0]+npix, toret[1]:toret[3]]
+        top_ext = image[toret[0]-npix:toret[0], toret[1]:toret[3]]
+        bottom_int = image[toret[2]-npix:toret[2], toret[1]:toret[3]]
+        bottom_ext = image[toret[2]:toret[2]+npix, toret[1]:toret[3]]
+
+        left_int = image[toret[0]:toret[2], toret[1]:toret[1]+npix]
+        left_ext = image[toret[0]:toret[2], toret[1]-npix:toret[1]]
+        right_int = image[toret[0]:toret[2], toret[3]-npix:toret[3]]
+        right_ext = image[toret[0]:toret[2], toret[3]:toret[3]+npix]
+
+        if np.mean(top_int)>imgmean+imgstd*thr or np.mean(top_int)<imgmean-imgstd*thr or np.std(top_int)>np.std(top_ext)*thr:
+            toret[0]=toret[0]-npix
+        if np.mean(bottom_int)>imgmean+imgstd*thr or np.mean(bottom_int)<imgmean-imgstd*thr or np.std(bottom_int)>np.std(bottom_ext)*thr:
+            toret[2]=toret[2]+npix
+        if np.mean(left_int)>imgmean+imgstd*thr or np.mean(left_int)<imgmean-imgstd*thr or np.std(left_int)>np.std(left_ext)*thr:
+            toret[1]=toret[1]-npix
+        if np.mean(right_int)>imgmean+imgstd*thr or np.mean(right_int)<imgmean-imgstd*thr or np.std(right_int)>np.std(right_ext)*thr:
+            toret[3]=toret[3]+npix
+
     return toret
 
 
