@@ -101,13 +101,13 @@ def get_ROIs_per_frame(image, thr=3.5):
 #@nb.njit(fastmath = True)
 def validate_roi(image, min_row, min_col, max_row, max_col):
     toret=[min_row, min_col, max_row, max_col]
-    npix=10
-    steps=2
+    npix=5
+    steps=10
     thr=1.5
-    bg1 = image[toret[0]-25:toret[0]-20, toret[1]:toret[3]]
-    bg2 = image[toret[2]+20:toret[2]+25, toret[1]:toret[3]]
-    bg3 = image[toret[0]:toret[2], toret[1]-25:toret[1]-20]
-    bg4 = image[toret[0]:toret[2], toret[3]+20:toret[3]+25]
+    bg1 = image[toret[0]-20:toret[0]-15, toret[1]:toret[3]]
+    bg2 = image[toret[2]+15:toret[2]+20, toret[1]:toret[3]]
+    bg3 = image[toret[0]:toret[2], toret[1]-20:toret[1]-15]
+    bg4 = image[toret[0]:toret[2], toret[3]+15:toret[3]+20]
 
     print('---------------BG')
     print('bg1=',bg1.tolist())
