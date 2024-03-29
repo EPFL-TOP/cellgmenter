@@ -99,34 +99,36 @@ def get_ROIs_per_frame(image, thr=3.5):
 
 #_______________________________________________
 #@nb.njit(fastmath = True)
-def validate_roi(image, min_row, min_col, max_row, max_col):
-    toret=[min_row, min_col, max_row, max_col]
-    npix=5
-    steps=10
-    thr=1.5
-    bg1 = image[toret[0]-20:toret[0]-15, toret[1]:toret[3]]
-    bg2 = image[toret[2]+15:toret[2]+20, toret[1]:toret[3]]
-    bg3 = image[toret[0]:toret[2], toret[1]-20:toret[1]-15]
-    bg4 = image[toret[0]:toret[2], toret[3]+15:toret[3]+20]
+def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
+    toret=[min_row-npix, min_col-npix, max_row+npix, max_col+npix]
 
-    print('---------------BG')
-    print('bg1=',bg1.tolist())
-    print('bg2=',bg2.tolist())
-    print('bg3=',bg3.tolist())
-    print('bg4=',bg4.tolist())
-    bg = np.concatenate((bg1.flatten(),bg2.flatten(),bg3.flatten(),bg4.flatten()))
+    steps=4
+    thr=1.15
 
     bgmean = np.mean(bg)
     bgstd  = np.std(bg)
     for i in range(steps):
 
-        top_int = image[toret[0]:toret[0]+npix, toret[1]:toret[3]]
-        top_ext = image[toret[0]-npix:toret[0], toret[1]:toret[3]]
+        bg_top = image[toret[0]-20:toret[0]-15, toret[1]:toret[3]]
+        bg_bot = image[toret[2]+15:toret[2]+20, toret[1]:toret[3]]
+        bg_rig = image[toret[0]:toret[2], toret[1]-20:toret[1]-15]
+        bg_lef = image[toret[0]:toret[2], toret[3]+15:toret[3]+20]
+
+    #bg = np.concatenate((bg1.flatten(),bg2.flatten(),bg3.flatten(),bg4.flatten()))
+
+        #print('---------------BG')
+        #print('bg1=',bg1.tolist())
+        #print('bg2=',bg2.tolist())
+        #print('bg3=',bg3.tolist())
+        #print('bg4=',bg4.tolist())
+
+        top_int    = image[toret[0]:toret[0]+npix, toret[1]:toret[3]]
+        top_ext    = image[toret[0]-npix:toret[0], toret[1]:toret[3]]
         bottom_int = image[toret[2]-npix:toret[2], toret[1]:toret[3]]
         bottom_ext = image[toret[2]:toret[2]+npix, toret[1]:toret[3]]
 
-        left_int = image[toret[0]:toret[2], toret[1]:toret[1]+npix]
-        left_ext = image[toret[0]:toret[2], toret[1]-npix:toret[1]]
+        left_int  = image[toret[0]:toret[2], toret[1]:toret[1]+npix]
+        left_ext  = image[toret[0]:toret[2], toret[1]-npix:toret[1]]
         right_int = image[toret[0]:toret[2], toret[3]-npix:toret[3]]
         right_ext = image[toret[0]:toret[2], toret[3]:toret[3]+npix]
 
@@ -157,19 +159,24 @@ def validate_roi(image, min_row, min_col, max_row, max_col):
         print('np.mean(left_int)=  ',np.mean(left_int), '  np.std(left_int)=',np.std(left_int), '  np.std(left_ext)*thr=',np.std(left_ext)*thr)
         print('np.mean(right_int)= ',np.mean(right_int), '  np.std(right_int)=',np.std(right_int), '  np.std(right_ext)*thr=',np.std(right_ext)*thr)
 
-        if np.std(top_int)>bgstd*thr or np.std(top_ext)>bgstd*thr:
+        cond=False
+        if np.std(top_int)>np.std(bg_top)*thr:
             toret[0]=toret[0]-npix
+            cond=True
             print('top cond')
-        if np.std(bottom_int)>bgstd*thr or np.std(bottom_ext)>bgstd*thr:
+        if np.std(bottom_int)>np.std(bg_bot)*thr:
             toret[2]=toret[2]+npix
+            cond=True
             print('bottom cond')
-        if np.std(left_int)>bgstd*thr or np.std(left_ext)>bgstd*thr:
+        if np.std(left_int)>np.std(bg_lef)*thr:
             toret[1]=toret[1]-npix
+            cond=True
             print('left cond')
-        if np.std(right_int)>bgstd*thr or np.std(right_ext)>bgstd*thr:
+        if np.std(right_int)>np.std(bg_rig)*thr:
             toret[3]=toret[3]+npix
+            cond=True
             print('right cond')
-
+        if not cond: break
     return toret
 
 
