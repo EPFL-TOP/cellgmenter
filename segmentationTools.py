@@ -98,11 +98,11 @@ def get_ROIs_per_frame(image, thr=3.5):
 
 
 #_______________________________________________
-#@nb.njit(fastmath = True)
+@nb.njit(fastmath = True)
 def validate_roi(image, min_row, min_col, max_row, max_col):
     toret=[min_row, min_col, max_row, max_col]
     npix=10
-    steps=10
+    steps=2
     thr=1.5
     bg1 = image[toret[0]-25:toret[0]-20, toret[1]:toret[3]]
     bg2 = image[toret[2]+20:toret[2]+25, toret[1]:toret[3]]
@@ -110,10 +110,10 @@ def validate_roi(image, min_row, min_col, max_row, max_col):
     bg4 = image[toret[0]:toret[2], toret[1]+20:toret[3]+25]
 
     print('---------------BG')
-    print('bg1=',bg1)
-    print('bg2=',bg2)
-    print('bg3=',bg3)
-    print('bg4=',bg4)
+    print('bg1=',bg1.tolist())
+    print('bg2=',bg2.tolist())
+    print('bg3=',bg3.tolist())
+    print('bg4=',bg4.tolist())
     bg = np.concatenate((bg1.flatten(),bg2.flatten(),bg3.flatten(),bg4.flatten()))
 
     bgmean = np.mean(bg)
