@@ -106,8 +106,8 @@ def validate_roi(image, min_row, min_col, max_row, max_col):
     thr=1.5
     bg1 = image[toret[0]-25:toret[0]-20, toret[1]:toret[3]]
     bg2 = image[toret[2]+20:toret[2]+25, toret[1]:toret[3]]
-    bg3 = image[toret[0]:toret[2], toret[1]-25:toret[3]-20]
-    bg4 = image[toret[0]:toret[2], toret[1]+20:toret[3]+25]
+    bg3 = image[toret[0]:toret[2], toret[1]-25:toret[1]-20]
+    bg4 = image[toret[0]:toret[2], toret[3]+20:toret[3]+25]
 
     print('---------------BG')
     print('bg1=',bg1.tolist())
