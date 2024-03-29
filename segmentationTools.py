@@ -135,8 +135,8 @@ def validate_roi(image, min_row, min_col, max_row, max_col):
         print(left_int.tolist())
         print(left_ext.tolist())
         print('RIGHT---------------')
-        print(right_int.to_list())
-        print(right_ext.to_list())
+        print(right_int.tolist())
+        print(right_ext.tolist())
 
         print('min_row, min_col, max_row, max_col ',toret[0], toret[1], toret[2], toret[3])
         print('max_row-min_row, max_col-min_col=',toret[2]-toret[0], toret[3]-toret[1])
