@@ -152,7 +152,7 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
         print('left_int=',left_int.shape, '  left_ext=',left_ext.shape)
 
         print('step=',i)
-        print('bg mean=',bgmean, '  bgstd=',bgstd)
+        #print('bg mean=',bgmean, '  bgstd=',bgstd)
         print('np.mean(top_int)=   ',np.mean(top_int), '  np.std(top_int)=',np.std(top_int), '  np.std(top_ext)*thr=',np.std(top_ext)*thr)
         print('np.mean(bottom_int)=',np.mean(bottom_int), '  np.std(bottom_int)=',np.std(bottom_int), '  np.std(bottom_ext)*thr=',np.std(bottom_ext)*thr)
         print('np.mean(left_int)=  ',np.mean(left_int), '  np.std(left_int)=',np.std(left_int), '  np.std(left_ext)*thr=',np.std(left_ext)*thr)
