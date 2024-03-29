@@ -104,12 +104,17 @@ def validate_roi(image, min_row, min_col, max_row, max_col):
     npix=10
     steps=10
     thr=1.5
-    bg1 = image[toret[0]-25:toret[0]-20, toret[1]:toret[3]].flatten()
-    bg2 = image[toret[2]+20:toret[2]+25, toret[1]:toret[3]].flatten()
-    bg3 = image[toret[0]:toret[2], toret[1]-25:toret[3]-20].flatten()
-    bg4 = image[toret[0]:toret[2], toret[1]+20:toret[3]+25].flatten()
+    bg1 = image[toret[0]-25:toret[0]-20, toret[1]:toret[3]]
+    bg2 = image[toret[2]+20:toret[2]+25, toret[1]:toret[3]]
+    bg3 = image[toret[0]:toret[2], toret[1]-25:toret[3]-20]
+    bg4 = image[toret[0]:toret[2], toret[1]+20:toret[3]+25]
 
-    bg = np.concatenate((bg1,bg2,bg3,bg4))
+    print('---------------BG')
+    print('bg1=',bg1)
+    print('bg2=',bg2)
+    print('bg3=',bg3)
+    print('bg4=',bg4)
+    bg = np.concatenate((bg1.flatten(),bg2.flatten(),bg3.flatten(),bg4.flatten()))
 
     bgmean = np.mean(bg)
     bgstd  = np.std(bg)
@@ -125,18 +130,18 @@ def validate_roi(image, min_row, min_col, max_row, max_col):
         right_int = image[toret[0]:toret[2], toret[3]-npix:toret[3]]
         right_ext = image[toret[0]:toret[2], toret[3]:toret[3]+npix]
 
-        print('TOP---------------')
-        print(top_int.tolist())
-        print(top_ext.tolist())
-        print('BOTTOM---------------')
-        print(bottom_int.tolist())
-        print(bottom_ext.tolist())
-        print('LEFT---------------')
-        print(left_int.tolist())
-        print(left_ext.tolist())
-        print('RIGHT---------------')
-        print(right_int.tolist())
-        print(right_ext.tolist())
+        #print('TOP---------------')
+        #print(top_int.tolist())
+        #print(top_ext.tolist())
+        #print('BOTTOM---------------')
+        #print(bottom_int.tolist())
+        #print(bottom_ext.tolist())
+        #print('LEFT---------------')
+        #print(left_int.tolist())
+        #print(left_ext.tolist())
+        #print('RIGHT---------------')
+        #print(right_int.tolist())
+        #print(right_ext.tolist())
 
         print('min_row, min_col, max_row, max_col ',toret[0], toret[1], toret[2], toret[3])
         print('max_row-min_row, max_col-min_col=',toret[2]-toret[0], toret[3]-toret[1])
