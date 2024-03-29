@@ -105,8 +105,7 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
     steps=4
     thr=1.15
 
-    bgmean = np.mean(bg)
-    bgstd  = np.std(bg)
+
     for i in range(steps):
 
         bg_top = image[toret[0]-20:toret[0]-15, toret[1]:toret[3]]
