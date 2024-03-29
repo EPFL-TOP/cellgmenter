@@ -101,12 +101,18 @@ def get_ROIs_per_frame(image, thr=3.5):
 @nb.njit(fastmath = True)
 def validate_roi(image, min_row, min_col, max_row, max_col):
     toret=[min_row, min_col, max_row, max_col]
-    npix=5
+    npix=10
     steps=10
     thr=1.5
-    imgmean = np.mean(image)
-    imgstd  = np.std(image)
+    bg = image[toret[0]-25:toret[0]-20, toret[1]:toret[3]].tolist()
+    bg += image[toret[2]+25:toret[2]+20, toret[1]:toret[3]].tolist()
+    bg += image[toret[0]:toret[2], toret[1]-25:toret[3]-20].tolist()
+    bg += image[toret[0]:toret[2], toret[1]+25:toret[3]+20].tolist()
+
+    bgmean = np.mean(bg)
+    bgstd  = np.std(bg)
     for i in range(steps):
+
         top_int = image[toret[0]:toret[0]+npix, toret[1]:toret[3]]
         top_ext = image[toret[0]-npix:toret[0], toret[1]:toret[3]]
         bottom_int = image[toret[2]-npix:toret[2], toret[1]:toret[3]]
@@ -125,22 +131,22 @@ def validate_roi(image, min_row, min_col, max_row, max_col):
         print('left_int=',left_int.shape, '  left_ext=',left_ext.shape)
 
         print('step=',i)
-        print('imgmean=',imgmean,  '  imgstd=',imgstd, '  imgmean+imgstd*thr=',imgmean+imgstd*thr,'  imgmean-imgstd*thr=',imgmean-imgstd*thr, '  imgstd*thr=',imgstd*thr)
+        print('bg mean=',bgmean, '  bgstd=',bgstd)
         print('np.mean(top_int)=   ',np.mean(top_int), '  np.std(top_int)=',np.std(top_int), '  np.std(top_ext)*thr=',np.std(top_ext)*thr)
         print('np.mean(bottom_int)=',np.mean(bottom_int), '  np.std(bottom_int)=',np.std(bottom_int), '  np.std(bottom_ext)*thr=',np.std(bottom_ext)*thr)
         print('np.mean(left_int)=  ',np.mean(left_int), '  np.std(left_int)=',np.std(left_int), '  np.std(left_ext)*thr=',np.std(left_ext)*thr)
         print('np.mean(right_int)= ',np.mean(right_int), '  np.std(right_int)=',np.std(right_int), '  np.std(right_ext)*thr=',np.std(right_ext)*thr)
 
-        if np.mean(top_int)>imgmean+imgstd*thr or np.mean(top_int)<imgmean-imgstd*thr or np.std(top_int)>imgstd*thr or np.std(top_int)>np.std(top_ext)*thr:
+        if np.std(top_int)>bgstd*thr or np.std(top_ext)>bgstd*thr:
             toret[0]=toret[0]-npix
             print('top cond')
-        if np.mean(bottom_int)>imgmean+imgstd*thr or np.mean(bottom_int)<imgmean-imgstd*thr or np.std(bottom_int)>imgstd*thr or np.std(bottom_int)>np.std(bottom_ext)*thr:
+        if np.std(bottom_int)>bgstd*thr or np.std(bottom_ext)>bgstd*thr:
             toret[2]=toret[2]+npix
             print('bottom cond')
-        if np.mean(left_int)>imgmean+imgstd*thr or np.mean(left_int)<imgmean-imgstd*thr  or np.std(left_int)>imgstd*thr or np.std(left_int)>np.std(left_ext)*thr:
+        if np.std(left_int)>bgstd*thr or np.std(left_ext)>bgstd*thr:
             toret[1]=toret[1]-npix
             print('left cond')
-        if np.mean(right_int)>imgmean+imgstd*thr or np.mean(right_int)<imgmean-imgstd*thr  or np.std(right_int)>imgstd*thr or np.std(right_int)>np.std(right_ext)*thr:
+        if np.std(right_int)>bgstd*thr or np.std(right_ext)>bgstd*thr:
             toret[3]=toret[3]+npix
             print('right cond')
 
