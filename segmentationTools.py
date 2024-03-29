@@ -105,9 +105,9 @@ def validate_roi(image, min_row, min_col, max_row, max_col):
     steps=10
     thr=1.5
     bg1 = image[toret[0]-25:toret[0]-20, toret[1]:toret[3]].flatten()
-    bg2 = image[toret[2]+25:toret[2]+20, toret[1]:toret[3]].flatten()
+    bg2 = image[toret[2]+20:toret[2]+25, toret[1]:toret[3]].flatten()
     bg3 = image[toret[0]:toret[2], toret[1]-25:toret[3]-20].flatten()
-    bg4 = image[toret[0]:toret[2], toret[1]+25:toret[3]+20].flatten()
+    bg4 = image[toret[0]:toret[2], toret[1]+20:toret[3]+25].flatten()
 
     bg = np.concatenate((bg1,bg2,bg3,bg4))
 
