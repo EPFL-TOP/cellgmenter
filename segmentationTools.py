@@ -98,7 +98,7 @@ def get_ROIs_per_frame(image, thr=3.5):
 
 
 #_______________________________________________
-@nb.njit(fastmath = True)
+#@nb.njit(fastmath = True)
 def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
     toret=[min_row, min_col, max_row, max_col]
 
@@ -169,7 +169,7 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
         print('bg_lef=',bg_lef.to_list())
         print('right_int=',right_int.to_list())
         print('bg_rig=',bg_rig.to_list())
-        
+
         cond=False
         if np.std(top_int)>np.std(bg_top)*thr:
             if toret[0]-npix>=0:
