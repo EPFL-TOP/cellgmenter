@@ -108,8 +108,8 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
 
     for i in range(steps):
 
-        min_top=-npix_tot
-        if toret[0]<=npix_tot: 
+        min_top=npix_tot
+        if toret[0]<=npix_tot:
             min_top=toret[0]
         bg_top = image[toret[0]-min_top:toret[0]-min_top+5, toret[1]:toret[3]]
 
@@ -118,7 +118,7 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
             min_bot=image.shape[0]-toret[2]
         bg_bot = image[toret[2]+min_bot-5:toret[2]+min_bot, toret[1]:toret[3]]
 
-        min_lef=-npix_tot
+        min_lef=npix_tot
         if toret[1]<=npix_tot:
             min_lef=toret[1]
         bg_lef = image[toret[0]:toret[2], toret[1]-min_lef:toret[1]-min_lef+5]
