@@ -100,18 +100,18 @@ def get_ROIs_per_frame(image, thr=3.5):
 #_______________________________________________
 #@nb.njit(fastmath = True)
 def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
-    toret=[min_row-npix, min_col-npix, max_row+npix, max_col+npix]
+    toret=[min_row, min_col, max_row, max_col]
 
-    steps=4
+    steps=5
     thr=1.15
 
 
     for i in range(steps):
 
-        bg_top = image[toret[0]-20:toret[0]-15, toret[1]:toret[3]]
-        bg_bot = image[toret[2]+15:toret[2]+20, toret[1]:toret[3]]
-        bg_rig = image[toret[0]:toret[2], toret[1]-20:toret[1]-15]
-        bg_lef = image[toret[0]:toret[2], toret[3]+15:toret[3]+20]
+        bg_top = image[toret[0]-25:toret[0]-20, toret[1]:toret[3]]
+        bg_bot = image[toret[2]+20:toret[2]+25, toret[1]:toret[3]]
+        bg_rig = image[toret[0]:toret[2], toret[1]-25:toret[1]-20]
+        bg_lef = image[toret[0]:toret[2], toret[3]+20:toret[3]+25]
 
     #bg = np.concatenate((bg1.flatten(),bg2.flatten(),bg3.flatten(),bg4.flatten()))
 
