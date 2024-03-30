@@ -107,72 +107,77 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
 
     for i in range(steps):
 
-        bg_top = image[toret[0]-25:toret[0]-20, toret[1]:toret[3]]
-        bg_bot = image[toret[2]+20:toret[2]+25, toret[1]:toret[3]]
-        bg_rig = image[toret[0]:toret[2], toret[1]-25:toret[1]-20]
-        bg_lef = image[toret[0]:toret[2], toret[3]+20:toret[3]+25]
+        min_top=-25
+        if toret[0]<=25: 
+            min_top=toret[0]
+        bg_top = image[toret[0]-min_top:toret[0]-min_top+5, toret[1]:toret[3]]
 
-    #bg = np.concatenate((bg1.flatten(),bg2.flatten(),bg3.flatten(),bg4.flatten()))
+        min_bot=25
+        if toret[2]>=image.shape[0]-25: 
+            min_bot=image.shape[0]-toret[2]
+        bg_bot = image[toret[2]+min_bot-5:toret[2]+min_bot, toret[1]:toret[3]]
 
-        #print('---------------BG')
-        #print('bg1=',bg1.tolist())
-        #print('bg2=',bg2.tolist())
-        #print('bg3=',bg3.tolist())
-        #print('bg4=',bg4.tolist())
+        min_lef=-25
+        if toret[1]<=25:
+            min_lef=toret[1]
+        bg_lef = image[toret[0]:toret[2], toret[1]-min_lef:toret[1]-min_lef+5]
+
+        min_rig=-25
+        if toret[3]>=image.shape[1]-25: 
+            min_rig=image.shape[1]-toret[3]        
+        bg_rig = image[toret[0]:toret[2], toret[3]+min_rig-5:toret[3]+min_rig]
+
+
 
         top_int    = image[toret[0]:toret[0]+npix, toret[1]:toret[3]]
-        top_ext    = image[toret[0]-npix:toret[0], toret[1]:toret[3]]
+        #top_ext    = image[toret[0]-npix:toret[0], toret[1]:toret[3]]
         bottom_int = image[toret[2]-npix:toret[2], toret[1]:toret[3]]
-        bottom_ext = image[toret[2]:toret[2]+npix, toret[1]:toret[3]]
+        #bottom_ext = image[toret[2]:toret[2]+npix, toret[1]:toret[3]]
 
         left_int  = image[toret[0]:toret[2], toret[1]:toret[1]+npix]
-        left_ext  = image[toret[0]:toret[2], toret[1]-npix:toret[1]]
+        #left_ext  = image[toret[0]:toret[2], toret[1]-npix:toret[1]]
         right_int = image[toret[0]:toret[2], toret[3]-npix:toret[3]]
-        right_ext = image[toret[0]:toret[2], toret[3]:toret[3]+npix]
+        #right_ext = image[toret[0]:toret[2], toret[3]:toret[3]+npix]
 
-        #print('TOP---------------')
-        #print(top_int.tolist())
-        #print(top_ext.tolist())
-        #print('BOTTOM---------------')
-        #print(bottom_int.tolist())
-        #print(bottom_ext.tolist())
-        #print('LEFT---------------')
-        #print(left_int.tolist())
-        #print(left_ext.tolist())
-        #print('RIGHT---------------')
-        #print(right_int.tolist())
-        #print(right_ext.tolist())
+
 
         print('min_row, min_col, max_row, max_col ',toret[0], toret[1], toret[2], toret[3])
         print('max_row-min_row, max_col-min_col=',toret[2]-toret[0], toret[3]-toret[1])
-        print('top_int=',top_int.shape, '  top_ext=',top_ext.shape)
-        print('bottom_int=',bottom_int.shape, '  bottom_ext=',bottom_ext.shape)
-        print('right_int=',right_int.shape, '  right_ext=',right_ext.shape)
-        print('left_int=',left_int.shape, '  left_ext=',left_ext.shape)
+        #print('top_int=',top_int.shape, '  top_ext=',top_ext.shape)
+        #print('bottom_int=',bottom_int.shape, '  bottom_ext=',bottom_ext.shape)
+        #print('right_int=',right_int.shape, '  right_ext=',right_ext.shape)
+        #print('left_int=',left_int.shape, '  left_ext=',left_ext.shape)
 
-        print('step=',i)
         #print('bg mean=',bgmean, '  bgstd=',bgstd)
-        print('np.mean(top_int)=   ',np.mean(top_int), '  np.std(top_int)=',np.std(top_int), '  np.std(top_ext)*thr=',np.std(top_ext)*thr)
-        print('np.mean(bottom_int)=',np.mean(bottom_int), '  np.std(bottom_int)=',np.std(bottom_int), '  np.std(bottom_ext)*thr=',np.std(bottom_ext)*thr)
-        print('np.mean(left_int)=  ',np.mean(left_int), '  np.std(left_int)=',np.std(left_int), '  np.std(left_ext)*thr=',np.std(left_ext)*thr)
-        print('np.mean(right_int)= ',np.mean(right_int), '  np.std(right_int)=',np.std(right_int), '  np.std(right_ext)*thr=',np.std(right_ext)*thr)
+        #print('np.mean(top_int)=   ',np.mean(top_int), '  np.std(top_int)=',np.std(top_int), '  np.std(top_ext)*thr=',np.std(top_ext)*thr)
+        #print('np.mean(bottom_int)=',np.mean(bottom_int), '  np.std(bottom_int)=',np.std(bottom_int), '  np.std(bottom_ext)*thr=',np.std(bottom_ext)*thr)
+        #print('np.mean(left_int)=  ',np.mean(left_int), '  np.std(left_int)=',np.std(left_int), '  np.std(left_ext)*thr=',np.std(left_ext)*thr)
+        #print('np.mean(right_int)= ',np.mean(right_int), '  np.std(right_int)=',np.std(right_int), '  np.std(right_ext)*thr=',np.std(right_ext)*thr)
 
         cond=False
         if np.std(top_int)>np.std(bg_top)*thr:
-            toret[0]=toret[0]-npix
-            cond=True
+            if toret[0]-npix>=0:
+                toret[0]=toret[0]-npix
+                cond=True
+            else:toret[0]=0
             print('top cond')
         if np.std(bottom_int)>np.std(bg_bot)*thr:
-            toret[2]=toret[2]+npix
-            cond=True
+            if toret[2]+npix <= image.shape[0]:
+                toret[2]=toret[2]+npix
+                cond=True
+            else:toret[2]=image.shape[0]
             print('bottom cond')
         if np.std(left_int)>np.std(bg_lef)*thr:
-            toret[1]=toret[1]-npix
-            cond=True
+            if toret[1]-npix>=0:
+                toret[1]=toret[1]-npix
+                cond=True
+            else: toret[1]=0
             print('left cond')
         if np.std(right_int)>np.std(bg_rig)*thr:
-            toret[3]=toret[3]+npix
-            cond=True
+            if toret[3]+npix<=image.shape[1]:
+                toret[3]=toret[3]+npix
+                cond=True
+            else: toret[3]=image.shape[1]
             print('right cond')
         if not cond: break
     return toret
