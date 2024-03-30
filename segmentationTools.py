@@ -149,11 +149,17 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
         #print('right_int=',right_int.shape, '  right_ext=',right_ext.shape)
         #print('left_int=',left_int.shape, '  left_ext=',left_ext.shape)
 
-        print('bg mean=',bgmean, '  bgstd=',bgstd)
         print('np.mean(top_int)=    ',np.mean(top_int),    '  np.std(top_int)=    ',np.std(top_int))
+        print('np.mean(bg_top)=     ',np.mean(bg_top),     '  np.std(bg_top)=     ',np.std(bg_top))
+        
         print('np.mean(bottom_int)= ',np.mean(bottom_int), '  np.std(bottom_int)= ',np.std(bottom_int))
+        print('np.mean(bg_bot)=     ',np.mean(bg_bot),     '  np.std(bg_bot)=     ',np.std(bg_bot))
+        
         print('np.mean(left_int)=   ',np.mean(left_int),   '  np.std(left_int)=   ',np.std(left_int))
+        print('np.mean(bg_lef)=     ',np.mean(bg_lef),     '  np.std(bg_lef)=     ',np.std(bg_lef))
+
         print('np.mean(right_int)=  ',np.mean(right_int),  '  np.std(right_int)=  ',np.std(right_int))
+        print('np.mean(bg_rig)=     ',np.mean(bg_rig),     '  np.std(bg_rig)=     ',np.std(bg_rig))
 
         cond=False
         if np.std(top_int)>np.std(bg_top)*thr:
