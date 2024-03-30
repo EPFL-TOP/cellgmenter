@@ -161,14 +161,14 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
         print('np.mean(right_int)=  ',np.mean(right_int),  '  np.std(right_int)=  ',np.std(right_int))
         print('np.mean(bg_rig)=     ',np.mean(bg_rig),     '  np.std(bg_rig)=     ',np.std(bg_rig))
 
-        print('top_int=',top_int.to_list())
-        print('bg_top=',bg_top.to_list())
-        print('bottom_int=',bottom_int.to_list())
-        print('bg_bot=',bg_bot.to_list())
-        print('left_int=',left_int.to_list())
-        print('bg_lef=',bg_lef.to_list())
-        print('right_int=',right_int.to_list())
-        print('bg_rig=',bg_rig.to_list())
+        print('top_int=',top_int.tolist())
+        print('bg_top=',bg_top.tolist())
+        print('bottom_int=',bottom_int.tolist())
+        print('bg_bot=',bg_bot.tolist())
+        print('left_int=',left_int.tolist())
+        print('bg_lef=',bg_lef.tolist())
+        print('right_int=',right_int.tolist())
+        print('bg_rig=',bg_rig.tolist())
 
         cond=False
         if np.std(top_int)>np.std(bg_top)*thr:
