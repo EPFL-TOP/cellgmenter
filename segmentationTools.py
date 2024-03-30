@@ -98,13 +98,12 @@ def get_ROIs_per_frame(image, thr=3.5):
 
 
 #_______________________________________________
-#@nb.njit(fastmath = True)
+@nb.njit(fastmath = True)
 def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
     toret=[min_row, min_col, max_row, max_col]
 
     steps=5
     thr=1.15
-
 
     for i in range(steps):
 
@@ -144,12 +143,12 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
         #print(right_int.tolist())
         #print(right_ext.tolist())
 
-        print('min_row, min_col, max_row, max_col ',toret[0], toret[1], toret[2], toret[3])
-        print('max_row-min_row, max_col-min_col=',toret[2]-toret[0], toret[3]-toret[1])
-        print('top_int=',top_int.shape, '  top_ext=',top_ext.shape)
-        print('bottom_int=',bottom_int.shape, '  bottom_ext=',bottom_ext.shape)
-        print('right_int=',right_int.shape, '  right_ext=',right_ext.shape)
-        print('left_int=',left_int.shape, '  left_ext=',left_ext.shape)
+        #print('min_row, min_col, max_row, max_col ',toret[0], toret[1], toret[2], toret[3])
+        #print('max_row-min_row, max_col-min_col=',toret[2]-toret[0], toret[3]-toret[1])
+        #print('top_int=',top_int.shape, '  top_ext=',top_ext.shape)
+        #print('bottom_int=',bottom_int.shape, '  bottom_ext=',bottom_ext.shape)
+        #print('right_int=',right_int.shape, '  right_ext=',right_ext.shape)
+        #print('left_int=',left_int.shape, '  left_ext=',left_ext.shape)
 
         print('step=',i)
         #print('bg mean=',bgmean, '  bgstd=',bgstd)
