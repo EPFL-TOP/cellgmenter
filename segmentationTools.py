@@ -149,11 +149,11 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
         #print('right_int=',right_int.shape, '  right_ext=',right_ext.shape)
         #print('left_int=',left_int.shape, '  left_ext=',left_ext.shape)
 
-        #print('bg mean=',bgmean, '  bgstd=',bgstd)
-        #print('np.mean(top_int)=   ',np.mean(top_int), '  np.std(top_int)=',np.std(top_int), '  np.std(top_ext)*thr=',np.std(top_ext)*thr)
-        #print('np.mean(bottom_int)=',np.mean(bottom_int), '  np.std(bottom_int)=',np.std(bottom_int), '  np.std(bottom_ext)*thr=',np.std(bottom_ext)*thr)
-        #print('np.mean(left_int)=  ',np.mean(left_int), '  np.std(left_int)=',np.std(left_int), '  np.std(left_ext)*thr=',np.std(left_ext)*thr)
-        #print('np.mean(right_int)= ',np.mean(right_int), '  np.std(right_int)=',np.std(right_int), '  np.std(right_ext)*thr=',np.std(right_ext)*thr)
+        print('bg mean=',bgmean, '  bgstd=',bgstd)
+        print('np.mean(top_int)=    ',np.mean(top_int),    '  np.std(top_int)=    ',np.std(top_int))
+        print('np.mean(bottom_int)= ',np.mean(bottom_int), '  np.std(bottom_int)= ',np.std(bottom_int))
+        print('np.mean(left_int)=   ',np.mean(left_int),   '  np.std(left_int)=   ',np.std(left_int))
+        print('np.mean(right_int)=  ',np.mean(right_int),  '  np.std(right_int)=  ',np.std(right_int))
 
         cond=False
         if np.std(top_int)>np.std(bg_top)*thr:
