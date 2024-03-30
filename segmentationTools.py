@@ -102,28 +102,29 @@ def get_ROIs_per_frame(image, thr=3.5):
 def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
     toret=[min_row, min_col, max_row, max_col]
 
-    steps=5
-    thr=1.15
+    npix_tot=30
+    steps=6
+    thr=1.1
 
     for i in range(steps):
 
-        min_top=-25
-        if toret[0]<=25: 
+        min_top=-npix_tot
+        if toret[0]<=npix_tot: 
             min_top=toret[0]
         bg_top = image[toret[0]-min_top:toret[0]-min_top+5, toret[1]:toret[3]]
 
-        min_bot=25
-        if toret[2]>=image.shape[0]-25: 
+        min_bot=npix_tot
+        if toret[2]>=image.shape[0]-npix_tot: 
             min_bot=image.shape[0]-toret[2]
         bg_bot = image[toret[2]+min_bot-5:toret[2]+min_bot, toret[1]:toret[3]]
 
-        min_lef=-25
-        if toret[1]<=25:
+        min_lef=-npix_tot
+        if toret[1]<=npix_tot:
             min_lef=toret[1]
         bg_lef = image[toret[0]:toret[2], toret[1]-min_lef:toret[1]-min_lef+5]
 
-        min_rig=-25
-        if toret[3]>=image.shape[1]-25: 
+        min_rig=-npix_tot
+        if toret[3]>=image.shape[1]-npix_tot: 
             min_rig=image.shape[1]-toret[3]        
         bg_rig = image[toret[0]:toret[2], toret[3]+min_rig-5:toret[3]+min_rig]
 
@@ -140,7 +141,7 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
         #right_ext = image[toret[0]:toret[2], toret[3]:toret[3]+npix]
 
 
-
+        print('step=',i)
         print('min_row, min_col, max_row, max_col ',toret[0], toret[1], toret[2], toret[3])
         print('max_row-min_row, max_col-min_col=',toret[2]-toret[0], toret[3]-toret[1])
         #print('top_int=',top_int.shape, '  top_ext=',top_ext.shape)
