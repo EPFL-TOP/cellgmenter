@@ -104,7 +104,7 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
 
     npix_tot=30
     steps=6
-    thr=1.1
+    thr=1.3
 
     for i in range(steps):
 
