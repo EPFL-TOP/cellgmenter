@@ -142,33 +142,33 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
 
 
         print('step=',i)
-        print('min_row, min_col, max_row, max_col ',toret[0], toret[1], toret[2], toret[3])
-        print('max_row-min_row, max_col-min_col=',toret[2]-toret[0], toret[3]-toret[1])
+        #print('min_row, min_col, max_row, max_col ',toret[0], toret[1], toret[2], toret[3])
+        #print('max_row-min_row, max_col-min_col=',toret[2]-toret[0], toret[3]-toret[1])
         #print('top_int=',top_int.shape, '  top_ext=',top_ext.shape)
         #print('bottom_int=',bottom_int.shape, '  bottom_ext=',bottom_ext.shape)
         #print('right_int=',right_int.shape, '  right_ext=',right_ext.shape)
         #print('left_int=',left_int.shape, '  left_ext=',left_ext.shape)
 
-        print('np.mean(top_int)=    ',np.mean(top_int),    '  np.std(top_int)=    ',np.std(top_int))
-        print('np.mean(bg_top)=     ',np.mean(bg_top),     '  np.std(bg_top)=     ',np.std(bg_top))
+        #print('np.mean(top_int)=    ',np.mean(top_int),    '  np.std(top_int)=    ',np.std(top_int))
+        #print('np.mean(bg_top)=     ',np.mean(bg_top),     '  np.std(bg_top)=     ',np.std(bg_top))
         
-        print('np.mean(bottom_int)= ',np.mean(bottom_int), '  np.std(bottom_int)= ',np.std(bottom_int))
-        print('np.mean(bg_bot)=     ',np.mean(bg_bot),     '  np.std(bg_bot)=     ',np.std(bg_bot))
+        #print('np.mean(bottom_int)= ',np.mean(bottom_int), '  np.std(bottom_int)= ',np.std(bottom_int))
+        #print('np.mean(bg_bot)=     ',np.mean(bg_bot),     '  np.std(bg_bot)=     ',np.std(bg_bot))
         
-        print('np.mean(left_int)=   ',np.mean(left_int),   '  np.std(left_int)=   ',np.std(left_int))
-        print('np.mean(bg_lef)=     ',np.mean(bg_lef),     '  np.std(bg_lef)=     ',np.std(bg_lef))
+        #print('np.mean(left_int)=   ',np.mean(left_int),   '  np.std(left_int)=   ',np.std(left_int))
+        #print('np.mean(bg_lef)=     ',np.mean(bg_lef),     '  np.std(bg_lef)=     ',np.std(bg_lef))
 
-        print('np.mean(right_int)=  ',np.mean(right_int),  '  np.std(right_int)=  ',np.std(right_int))
-        print('np.mean(bg_rig)=     ',np.mean(bg_rig),     '  np.std(bg_rig)=     ',np.std(bg_rig))
+        #print('np.mean(right_int)=  ',np.mean(right_int),  '  np.std(right_int)=  ',np.std(right_int))
+        #print('np.mean(bg_rig)=     ',np.mean(bg_rig),     '  np.std(bg_rig)=     ',np.std(bg_rig))
 
-        print('top_int=',top_int.tolist())
-        print('bg_top=',bg_top.tolist())
-        print('bottom_int=',bottom_int.tolist())
-        print('bg_bot=',bg_bot.tolist())
-        print('left_int=',left_int.tolist())
-        print('bg_lef=',bg_lef.tolist())
-        print('right_int=',right_int.tolist())
-        print('bg_rig=',bg_rig.tolist())
+        #print('top_int=',top_int.tolist())
+        #print('bg_top=',bg_top.tolist())
+        #print('bottom_int=',bottom_int.tolist())
+        #print('bg_bot=',bg_bot.tolist())
+        #print('left_int=',left_int.tolist())
+        #print('bg_lef=',bg_lef.tolist())
+        #print('right_int=',right_int.tolist())
+        #print('bg_rig=',bg_rig.tolist())
 
         cond=False
         if np.std(top_int)>np.std(bg_top)*thr:
@@ -176,25 +176,25 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
                 toret[0]=toret[0]-npix
                 cond=True
             else:toret[0]=0
-            print('top cond')
+            #print('top cond')
         if np.std(bottom_int)>np.std(bg_bot)*thr:
             if toret[2]+npix <= image.shape[0]:
                 toret[2]=toret[2]+npix
                 cond=True
             else:toret[2]=image.shape[0]
-            print('bottom cond')
+            #print('bottom cond')
         if np.std(left_int)>np.std(bg_lef)*thr:
             if toret[1]-npix>=0:
                 toret[1]=toret[1]-npix
                 cond=True
             else: toret[1]=0
-            print('left cond')
+            #print('left cond')
         if np.std(right_int)>np.std(bg_rig)*thr:
             if toret[3]+npix<=image.shape[1]:
                 toret[3]=toret[3]+npix
                 cond=True
             else: toret[3]=image.shape[1]
-            print('right cond')
+            #print('right cond')
         if not cond: break
     return toret
 
