@@ -141,7 +141,7 @@ def validate_roi(image, min_row, min_col, max_row, max_col, npix=5):
         #right_ext = image[toret[0]:toret[2], toret[3]:toret[3]+npix]
 
 
-        print('step=',i)
+        #print('step=',i)
         #print('min_row, min_col, max_row, max_col ',toret[0], toret[1], toret[2], toret[3])
         #print('max_row-min_row, max_col-min_col=',toret[2]-toret[0], toret[3]-toret[1])
         #print('top_int=',top_int.shape, '  top_ext=',top_ext.shape)
