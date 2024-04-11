@@ -60,7 +60,7 @@ def triangle_opening(frame):
     regions=regionprops(label_im)
     ROIs=[]
     for r in regions:
-        if r.num_pixels>100 and r.num_pixels<15000:
+        if r.num_pixels>50 and r.num_pixels<15000:
             #Bounding box (min_row, min_col, max_row, max_col). 
             #Pixels belonging to the bounding box are in the half-open interval [min_row; max_row) and [min_col; max_col).
             ROIs.append(r.bbox)
