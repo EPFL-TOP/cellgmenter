@@ -455,7 +455,11 @@ class segmentation_apoc:
     #_______________________________________________
     def segmentation(self, img):
         
-        normalize = normalize_background(img, sigma, gpu)
+        #normalize = normalize_background(img, sigma, gpu)
+
+        bg = gaussian(img, sigma=sigma)
+        normalize = img/bg
+
         prediction = np.asarray(self.clf.predict(normalize)-1,dtype=np.uint8)
         dilated = binary_dilation(prediction, disk(2))
         closed = binary_closing(dilated, disk(4))
