@@ -379,7 +379,7 @@ def fastiter_range_test(image, threshold, min_row, min_col, max_row, max_col):
 
 
 #_______________________________________________
-def segmentation(img, thr, min_row, min_col, max_row, max_col):
+def segmentation_localthresholding(img, thr, min_row, min_col, max_row, max_col):
     
     img_seeds=fastiter_range(img, thr, min_row, min_col, max_row, max_col)
 
@@ -447,8 +447,32 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
     return img_seeds
 
 
+#_______________________________________________
+class segmentation_apoc:
+    def __init__(self, model="models/pixel_classification.cl"):
+        self.clf  = apoc.PixelClassifier(opencl_filename=model)
 
+    #_______________________________________________
+    def segmentation(self, img):
+        
+        normalize = normalize_background(img, sigma, gpu)
+        prediction = np.asarray(self.clf.predict(normalize)-1,dtype=np.uint8)
+        dilated = binary_dilation(prediction, disk(2))
+        closed = binary_closing(dilated, disk(4))
+        filled = binary_fill_holes(closed).astype(int)
+        label_im = label(filled)
 
+        regions=regionprops(label_im)
+        contour=None
+        max_pix=0
+        for r in regions:
+        
+            if r.area>max_pix:
+                contour=r
+                max_pix=r.area
+
+        return contour
+    
 
 
 
