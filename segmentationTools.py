@@ -449,7 +449,7 @@ def fastiter_range(image, threshold, min_row, min_col, max_row, max_col):
 
 #_______________________________________________
 class segmentation_apoc:
-    def __init__(self, model="models/pixel_classification.cl"):
+    def __init__(self, model="/home/helsens/Software/segmentationTools/cellgmenter/main/models/pixel_classification.cl"):
         self.clf  = apoc.PixelClassifier(opencl_filename=model)
 
     #_______________________________________________
