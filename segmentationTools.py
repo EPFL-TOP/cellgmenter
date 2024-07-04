@@ -453,7 +453,7 @@ class segmentation_apoc:
         self.clf  = apoc.PixelClassifier(opencl_filename=model)
 
     #_______________________________________________
-    def segmentation(self, img):
+    def segmentation(self, img, min_row=-999, min_col=-999, max_row=-999, max_col=-999):
         
         #normalize = normalize_background(img, sigma, gpu)
 
@@ -470,7 +470,9 @@ class segmentation_apoc:
         contour=None
         max_pix=0
         for r in regions:
-        
+            centroid=r.centroid
+            if centroid[0]<min_row or centroid[0]>max_row or centroid[1]<min_col or centroid[1]>max_col: continue
+            
             if r.area>max_pix:
                 contour=r
                 max_pix=r.area
