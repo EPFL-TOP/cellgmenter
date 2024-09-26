@@ -6,6 +6,8 @@ import json
 import apoc
 import argparse
 import multiprocessing
+import numpy as np
+
 
 def process_position(pos, path_meta, proj, args, testclement, project_data, clf):
     if str(args.position) not in pos and args.position is not None:
@@ -124,8 +126,7 @@ if __name__ == '__main__':
 
         ## Multiprocessing setup
         n_cores = 10 # Number of cores to use, 10 in the HIVE
-        chunk_size = len(position_list) // n_cores
-        chunks = [position_list[i * chunk_size:(i + 1) * chunk_size] for i in range(n_cores)] # Chunks of the total iterable
+        chunks = np.array_split(position_list, n_cores)  # Chunks of the total iterable
 
         # Create a pool of workers
         with multiprocessing.Pool(n_cores) as pool:
